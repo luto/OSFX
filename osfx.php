@@ -16,9 +16,20 @@ require( 'vendor/autoload.php' );
 add_action( 'add_meta_boxes', 'shownote_box' );
 add_action( 'save_post', 'save_shownotes' );
 
+add_action( 'wp_print_styles', 'scripts_and_styles' );
+
 
 function save_shownotes( $post_id ) {
 	update_post_meta( $post_id, 'osfx_shownotes', $_POST['_osfx_shownotes'] );
+}
+
+function scripts_and_styles() {
+	wp_register_style(
+		'osfx_shownote_icons',
+		plugins_url() . '/OSFX/styles/bitmap.css.php',
+		false
+	);
+	wp_enqueue_style('osfx_shownote_icons');
 }
 
 function shownote_box() {
@@ -48,17 +59,30 @@ function template() {
 	$shownotes = parse_shownotes( $source );
 
 	return $twig->render(
-		   '<ul>
-			   {% for shownote in shownotes %} 
-			    <li>
-			    	{% if shownote.link.value %}
-						<a href="{{ shownote.link.value }}">{{ shownote.title.value }}</a>
-					{% else %}
-						{{ shownote.title.value }}
-					{% endif %}
-				</li>
+		   "<div class='osfx-shownote-block'>
+			   {% for shownote in shownotes %}
+			   {% if 'chapter' in shownote.tags %}
+			   		</div>
+			   			<h2 class='osfx-chapter'>
+			   				{{ block('title') }}
+			   				<span class='osfx-timestamp'>{{ shownote.timestamp.value }}</span>
+			   			</h2>
+			   		<div class='osfx-shownote-block'>
+			    {% else %}
+			  	    <span class='osfx-shownote-item {{ shownote.tags|join(' ') }}'>
+			   		 	{{ block('title') }}
+					</span>
+				{% endif %}
 				{% endfor %}
-			</ul>',
+			</div>
+
+			{% block title %}
+				{% if shownote.link.value %}
+				<a href=\"{{ shownote.link.value }}\">{{ shownote.title.value|trim }}</a>
+				{% else %}
+					{{ shownote.title.value|trim }}
+				{% endif %}
+			{% endblock %}",
 			array(
 				'shownotes' => $shownotes
 				)
@@ -149,7 +173,32 @@ function parse_shownotes( $source ) {
 	                    if ( $number_of_hash > 1 || strlen( $string ) == 1 || $next_char_is_alnum_char ) {
 	                        $shownote->title->value .= $string.' ';
 	                    } else {
-	                        $shownote->tags[] = substr( $string, 1 );
+	                    	$string = trim( substr( $string, 1 ) );
+
+	                    	switch ( strtolower( $string ) ) {
+	                    		case 'c' :
+	                    			$string = 'chapter';
+	                    		break;
+	                    		case 't' :
+	                    			$string = 'topic';
+	                    		break;
+	                    		case 'v' :
+	                    			$string = 'video';
+	                    		break;
+	                    		case 'a' :
+	                    			$string = 'audio';
+	                    		break;
+	                    		case 'i' :
+	                    			$string = 'image';
+	                    		break;
+	                    		case 'q' :
+	                    			$string = 'quote';
+	                    		break;
+	                    		case 'r' :
+	                    			$string = 'revision';
+	                    		break;
+	                    	}
+	                    	$shownote->tags[] = $string;
 	                    }
 	                break;
 	                case "<":
