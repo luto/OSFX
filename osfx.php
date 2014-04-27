@@ -18,6 +18,39 @@ add_action( 'save_post', 'save_shownotes' );
 
 add_action( 'wp_print_styles', 'scripts_and_styles' );
 
+add_action( 'admin_menu', 'admin_menu' );
+add_action( 'admin_init', 'register_settings' );
+
+function admin_menu() {
+	add_options_page(
+			'OSF X Options',
+			'OSF X',
+			'manage_options',
+			'osfx',
+			'osfx_settings_page'
+		);
+}
+
+function register_settings() {
+	register_setting( 'osfx_options_template', 'template' );
+	register_setting( 'osfx_options_style', 'style' );
+	register_setting( 'osfx_options_showpad', 'showpad' );
+}
+
+function osfx_settings_page() {
+	?>
+	<div class="wrap">
+	<h2>Shownotes Options</h2>
+	<form method="post" action="options.php">
+		<?php
+		
+
+		submit_button();
+		?>
+	</form>
+	</div>
+	<?php
+}
 
 function save_shownotes( $post_id ) {
 	update_post_meta( $post_id, 'osfx_shownotes', $_POST['_osfx_shownotes'] );
