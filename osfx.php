@@ -93,12 +93,12 @@ function template() {
 
 	return $twig->render(
 		   "<div class='osfx-shownote-block'>
-			   {% for shownote in shownotes %}
+			   {% for shownote in shownotes.entries %}
 			   {% if 'chapter' in shownote.tags %}
 			   		</div>
 			   			<h2 class='osfx-chapter'>
 			   				{{ block('title') }}
-			   				<span class='osfx-timestamp'>{{ shownote.timestamp.value }}</span>
+			   				<span class='osfx-timestamp'>{{ shownote.timestamp|date('H:i:s') }}</span>
 			   			</h2>
 			   		<div class='osfx-shownote-block'>
 			    {% else %}
@@ -110,10 +110,10 @@ function template() {
 			</div>
 
 			{% block title %}
-				{% if shownote.link.value %}
-				<a href=\"{{ shownote.link.value }}\">{{ shownote.title.value|trim }}</a>
+				{% if shownote.link %}
+				<a href=\"{{ shownote.link }}\">{{ shownote.title|trim }}</a>
 				{% else %}
-					{{ shownote.title.value|trim }}
+					{{ shownote.title|trim }}
 				{% endif %}
 			{% endblock %}",
 			array(
@@ -258,7 +258,7 @@ function parse_shownotes( $source ) {
 	            }
 	        }
 
-	        $shownotes[] = $shownote;
+	        $shownotes['entries'][] = $shownote;
 	    }   
 	}
 
@@ -281,6 +281,10 @@ class OSFShownote {
 }
 
 class OSFShownoteProperties {
+
+	function __tostring() {
+		return $this->value;
+	}
 
     function __construct() {
         $this->value    = NULL;
