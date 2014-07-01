@@ -17,6 +17,7 @@ add_action( 'add_meta_boxes', 'shownote_box' );
 add_action( 'save_post', 'save_shownotes' );
 
 add_action( 'wp_print_styles', 'scripts_and_styles' );
+add_action( 'admin_print_styles', 'admin_scripts_and_styles' );
 
 add_action( 'admin_menu', 'admin_menu' );
 add_action( 'admin_init', 'register_settings' );
@@ -32,21 +33,89 @@ function admin_menu() {
 }
 
 function register_settings() {
-	register_setting( 'osfx_options_template', 'template' );
-	register_setting( 'osfx_options_style', 'style' );
-	register_setting( 'osfx_options_showpad', 'showpad' );
+	register_setting( 'osfx_options', 'osfx_search' );
+	register_setting( 'osfx_options', 'osfx_template' );
+	register_setting( 'osfx_options', 'osfx_style' );
+	register_setting( 'osfx_options', 'osfx_showpad' );
 }
 
 function osfx_settings_page() {
 	?>
 	<div class="wrap">
 	<h2>Shownotes Options</h2>
-	<form method="post" action="options.php">
-		<?php
-		
-
-		submit_button();
-		?>
+	<form method="post" action="options.php" class="osfx-options">
+		<?php settings_fields( 'osfx_options' ); ?>
+		<?php do_settings_sections( 'osfx_options' ); ?>
+		<h3>General</h3>
+		<table class="form-table">
+	        <tr valign="top">
+	        	<th scope="row">
+	        		Search
+	        	</th>
+	       		<td>
+	       			<input type="checkbox" id="osfx_search" name="osfx_search" <?php echo ( get_option('osfx_search') == 'on' ? 'checked' : '' ) ?>/>
+	       			<label for="osfx_search">Include Shownotes in WordPress search</label>
+	       		</td>
+	        </tr>
+		</table>
+		<h3>Template &amp; Styles</h3>
+		Adjust the style and the way how shownotes are presented in your Podcast.
+		<table class="form-table">
+	        <tr valign="top">
+	        	<th scope="row">
+	        		Template
+	        	</th>
+	       		<td>
+	       			<textarea cols="80" rows="10" id="osfx_template" name="osfx_template"><?php echo get_option('osfx_template'); ?></textarea>
+	       			<br />
+	       			<label for="osfx_template">Use the Twig Template Syntax to edit the way how your Shownotes are displayed</label>
+	       		</td>
+	        </tr>
+	         <tr valign="top">
+	         	<th scope="row">
+	         		Style
+	         	</th>
+	        		<td>
+	        			<?php
+	        				$styles = array( 
+	        						'None' => '',
+	        						'Bitmap' => 'bitmap.css.php'
+	        					);
+	        			?>
+	        			<select id="osfx_style" name="osfx_style">
+	        				<?php
+	        					foreach ( $styles as $style_name => $style_file ) {
+	        						echo "<option value='" . $style_file . "' " . ( get_option('osfx_style') == $style_file ? 'selected' : '' ) . " >" . $style_name . "</option>";
+	        					}
+	        				?>
+	        			</select>
+	        			<label for="osfx_style">If you want, you can use one of the default styles, which will style your shownotes</label>
+	        		</td>
+	         </tr>
+		</table>
+		<h3>Import from ShowPad</h3>
+		The plugin allows you to easily import Shownotes from Showpad.
+		<table class="form-table">        
+	        <tr valign="top">
+		        <th scope="row">
+		        	Podcast Name
+		        </th>
+		        <td>
+		        	<input type="text" id="osfx_showpad" name="osfx_showpad" value="<?php echo get_option('osfx_showpad'); ?>" />
+		        	<label for="osfx_showpad">enter the Podcastname in the Showpad</label>
+		        </td>
+	        </tr>
+	    </table>
+	    <script type="text/javascript">
+	    	var editor = CodeMirror.fromTextArea(document.getElementById("osfx_template"), {
+	    	  mode: "application/xml",
+	    	  styleActiveLine: true,
+	    	  lineNumbers: true,
+	    	  lineWrapping: true,
+	    	  mode: 'application/x-twig'
+	    	});
+	    </script>
+	    <?php submit_button(); ?>
 	</form>
 	</div>
 	<?php
@@ -54,6 +123,77 @@ function osfx_settings_page() {
 
 function save_shownotes( $post_id ) {
 	update_post_meta( $post_id, 'osfx_shownotes', $_POST['_osfx_shownotes'] );
+}
+
+function admin_scripts_and_styles() {
+	wp_register_script(
+		'osfx_codemirror',
+		plugins_url() . '/OSFX/lib/codemirror/lib/codemirror.js',
+		false
+	);
+	wp_enqueue_script('osfx_codemirror');
+
+	wp_register_script(
+		'osfx_codemirror_twig',
+		plugins_url() . '/OSFX/lib/codemirror/mode/twig.js',
+		false
+	);
+	wp_enqueue_script('osfx_codemirror_twig');
+
+	wp_register_script(
+		'osfx_codemirror_twigmixed',
+		plugins_url() . '/OSFX/lib/codemirror/mode/twigmixed.js',
+		false
+	);
+	wp_enqueue_script('osfx_codemirror_twigmixed');
+
+	wp_register_script(
+		'osfx_codemirror_mixedmode',
+		plugins_url() . '/OSFX/lib/codemirror/mode/htmlmixed.js',
+		false
+	);
+	wp_enqueue_script('osfx_codemirror_mixedmode');
+
+	wp_register_script(
+		'osfx_codemirror_css',
+		plugins_url() . '/OSFX/lib/codemirror/mode/css.js',
+		false
+	);
+	wp_enqueue_script('osfx_codemirror_css');
+
+	wp_register_script(
+		'osfx_codemirror_javascript',
+		plugins_url() . '/OSFX/lib/codemirror/mode/javascript.js',
+		false
+	);
+	wp_enqueue_script('osfx_codemirror_javascript');
+
+	wp_register_script(
+		'osfx_codemirror_xml',
+		plugins_url() . '/OSFX/lib/codemirror/mode/xml.js',
+		false
+	);
+	wp_enqueue_script('osfx_codemirror_xml');
+
+	wp_register_script(
+		'osfx_codemirror_vbscript',
+		plugins_url() . '/OSFX/lib/codemirror/mode/vbscript.js',
+		false
+	);
+	wp_enqueue_script('osfx_codemirror_vbscript');
+
+	wp_register_style(
+		'osfx_codemirror',
+		plugins_url() . '/OSFX/lib/codemirror/lib/codemirror.css',
+		false
+	);
+	wp_enqueue_style('osfx_codemirror');
+	wp_register_style(
+		'osfx_settings_styles',
+		plugins_url() . '/OSFX/osfx.css',
+		false
+	);
+	wp_enqueue_style('osfx_settings_styles');
 }
 
 function scripts_and_styles() {
@@ -92,30 +232,7 @@ function template() {
 	$shownotes = parse_shownotes( $source );
 
 	return $twig->render(
-		   "<div class='osfx-shownote-block'>
-			   {% for shownote in shownotes.entries %}
-			   {% if 'chapter' in shownote.tags %}
-			   		</div>
-			   			<h2 class='osfx-chapter'>
-			   				{{ block('title') }}
-			   				<span class='osfx-timestamp'>{{ shownote.timestamp|date('H:i:s') }}</span>
-			   			</h2>
-			   		<div class='osfx-shownote-block'>
-			    {% else %}
-			  	    <span class='osfx-shownote-item {{ shownote.tags|join(' ') }}'>
-			   		 	{{ block('title') }}
-					</span>
-				{% endif %}
-				{% endfor %}
-			</div>
-
-			{% block title %}
-				{% if shownote.link %}
-				<a href=\"{{ shownote.link }}\">{{ shownote.title|trim }}</a>
-				{% else %}
-					{{ shownote.title|trim }}
-				{% endif %}
-			{% endblock %}",
+		   get_option('osfx_template'),
 			array(
 				'shownotes' => $shownotes
 				)
@@ -185,7 +302,7 @@ function parse_shownotes( $source ) {
 	                        // Find the parent element
 	                        $previous_shownote_key = count( $shownotes ) - 1;
 
-	                        while ( $previous_shownote_key >= 0 ) {
+	                        while ( $previous_shownote_key > 0 ) {
 	                            if ( !is_object( $shownotes[$previous_shownote_key]->level ) ||
 	                                 $shownotes[$previous_shownote_key]->level->value == $number_of_hyphen - 1 ) {
 
