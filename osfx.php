@@ -231,6 +231,13 @@ function admin_scripts_and_styles() {
 	wp_enqueue_script('osfx_codemirror_css');
 
 	wp_register_script(
+		'osfx_codemirror_osf',
+		plugins_url() . '/OSFX/lib/codemirror/mode/codemirror-osf/osf.js',
+		false
+	);
+	wp_enqueue_script('osfx_codemirror_osf');
+
+	wp_register_script(
 		'osfx_codemirror_javascript',
 		plugins_url() . '/OSFX/lib/codemirror/mode/javascript.js',
 		false
@@ -282,7 +289,16 @@ function shownote_box() {
 		'Shownotes',
 		function() use ( $post ) {
 			?>
-				<textarea class="large-text" name="_osfx_shownotes" style="height: 200px;"><?php echo get_post_meta( $post->ID, 'osfx_shownotes' , TRUE); ?></textarea>
+				<textarea class="large-text" name="_osfx_shownotes" id="_osfx_shownotes" style="height: 200px;"><?php echo get_post_meta( $post->ID, 'osfx_shownotes' , TRUE); ?></textarea>
+				<script type="text/javascript">
+					var editor = CodeMirror.fromTextArea(document.getElementById("_osfx_shownotes"), {
+					  mode: "application/xml",
+					  styleActiveLine: true,
+					  lineNumbers: true,
+					  lineWrapping: true,
+					  mode: 'text/x-osf'
+					});
+				</script>
 			<?php
 		},
 		'podcast' );
