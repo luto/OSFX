@@ -314,185 +314,223 @@ function template() {
 	if ( !$source )
 		return;
 
-	$shownotes = parse_shownotes( $source );
+	$shownotes = new Shownotes();
+	$shownotes->source = $source;
+	$shownotes->parse();
+	$entries = $shownotes->shownotes;
+	$shownotes->order();
+	$chapters = $shownotes->shownotes; 
 
 	return $twig->render(
 		   get_option('osfx_template'),
 			array(
-				'shownotes' => $shownotes
+				'shownotes' => array(
+						'entries' => $entries,
+						'chapters' => $chapters
+					)
 				)
 		   );
 
 }
 add_shortcode( 'shownotes', 'template' );
 
-function parse_shownotes( $source ) {
-	// Remove Header (is not used yet)
-	if( strpos($source, '/HEADER') )
-	    $source = substr( $source, strpos($source, '/HEADER') + 7 );
+class Shownote {
+	function __construct() {
+		$this->type 		= FALSE;
+		$this->timestamp 	= FALSE;
+		$this->title 		= '';
+		$this->url			= FALSE;
+		$this->tags 		= FALSE;
+		$this->level 		= 1;
+		$this->shownotes	= array();
 
-	$data            = array();
-	$line_pointer    = 0;
-	$first_timestamp = NULL;
-
-	foreach ( explode("\n", $source) as $key => $line ) {
-	    $data[$key][] = strtok( $line, " " );
-	    while ( $foo=strtok( " " ) ) {
-	        $data[$key][] = $foo;
-	    }
+		$this->isValid		= TRUE;
+		$this->errorMessage	= '';
+		$this->line			= 0;
 	}
 
-	foreach ( $data as $line_number => $line_content ) {
+	// For validation check if < is escaped!
 
-	    $line_pointer++;
-
-	    if ( trim($line_content[0]) ) {
-
-	        $shownote           = new OSFShownote;
-	        $shownote->title    = new OSFShownoteProperties; // A title should be always used. Therefore we create a corresponding object here
-	        $shownote->line     = $line_pointer;
-
-	        foreach ( $line_content as $string_key => $string ) {       
-
-	            $first_character = substr( $string, 0, 1 );
-	            
-	            switch ( $first_character ) {
-	                case "0" : case ( preg_match('/^[0-9]*$/', $first_character ) ? TRUE : FALSE ):
-	                    $timestring = FALSE;
-
-	                    // Check for characters indicating a time string
-	                    $numbers_of_colon = substr_count( $string , ':' );
-	                    $numbers_of_dots  = substr_count( $string , '.' );
-
-	                    if ( $numbers_of_colon == 2 && $numbers_of_dots <= 1 ) {
-	                        $shownote->timestamp        = new OSFShownoteProperties;
-	                        $shownote->timestamp->value = $string;
-	                    } elseif ( strlen($string) == 10 ) {
-	                        $shownote->timestamp        = new OSFShownoteProperties;
-	                        $shownote->timestamp->value = $string;
-	                        if ( is_null( $first_timestamp ) ) 
-	                            $first_timestamp = $string;
-	                    } else {
-	                        $shownote->title->value .= $string.' ';
-	                    } 
-	                break;
-	                case "-":
-	                    // If a hyphen appears we need to check for more hyphens to determine the level
-	                    $number_of_hyphen = substr_count( $string , '-' );
-
-	                    if ( !is_null( $number_of_hyphen ) && is_null( $shownote->title->value ) ) {
-	                        $shownote->level        = new OSFShownoteProperties;
-	                        $shownote->level->value = $number_of_hyphen;
-
-	                        // Find the parent element
-	                        $previous_shownote_key = count( $shownotes ) - 1;
-
-	                        while ( $previous_shownote_key > 0 ) {
-	                            if ( !is_object( $shownotes[$previous_shownote_key]->level ) ||
-	                                 $shownotes[$previous_shownote_key]->level->value == $number_of_hyphen - 1 ) {
-
-	                                $shownote->parent = $previous_shownote_key;
-	                                break;
-	                            }
-	                            $previous_shownote_key = $previous_shownote_key - 1;
-	                        }
-	                    } else {
-	                        $shownote->title->value .= $string.' '; 
-	                    }
-	                break;
-	                case "#":
-	                    // Check if hash appear multiple times (then add string to title because it is not a valid tag)
-	                    $number_of_hash = substr_count( $string , '#' );
-	                    $next_char_is_alnum_char = ( isset( $line_content[$string_key + 1][0] ) ? ctype_alnum( $line_content[$string_key + 1][0] ) : FALSE );
-
-	                    if ( $number_of_hash > 1 || strlen( $string ) == 1 || $next_char_is_alnum_char ) {
-	                        $shownote->title->value .= $string.' ';
-	                    } else {
-	                    	$string = trim( substr( $string, 1 ) );
-
-	                    	switch ( strtolower( $string ) ) {
-	                    		case 'c' :
-	                    			$string = 'chapter';
-	                    		break;
-	                    		case 't' :
-	                    			$string = 'topic';
-	                    		break;
-	                    		case 'v' :
-	                    			$string = 'video';
-	                    		break;
-	                    		case 'a' :
-	                    			$string = 'audio';
-	                    		break;
-	                    		case 'i' :
-	                    			$string = 'image';
-	                    		break;
-	                    		case 'q' :
-	                    			$string = 'quote';
-	                    		break;
-	                    		case 'r' :
-	                    			$string = 'revision';
-	                    		break;
-	                    	}
-	                    	$shownote->tags[] = $string;
-	                    }
-	                break;
-	                case "<":
-
-	                    $found_another_link_element = FALSE;
-
-	                    foreach ( array_slice( $line_content, $string_key + 1 ) as $line_element ) {
-	                        if ( $line_element[0] == '<' || ctype_alnum( $line_element[0] ) )
-	                            $found_another_link_element = TRUE;
-	                    }
-
-
-
-	                    if ( strpos( $string , '>' ) && !is_object( $shownote->link ) && $found_another_link_element == FALSE ) {
-	                        $shownote->link = new OSFShownoteProperties;
-	                        $shownote->link->value = substr( $string , 1, strpos( $string , '>' ) - 1 );
-	                    } else {
-	                        $shownote->title->value .= htmlspecialchars( $string ).' ';
-	                    }
-	                break;
-	                default:
-	                    $shownote->title->value .= $string.' ';
-	                break;  
-	            }
-	        }
-
-	        $shownotes['entries'][] = $shownote;
-	    }   
+	public function unescape_title_chars() {
+		$this->title = str_replace('\>', '>', $this->title);
+		$this->title = str_replace('\<', '<', $this->title);
+		$this->title = str_replace('\#', '#', $this->title);
 	}
 
-	return $shownotes;
+	public function set_type() {
+		$this->type = $this->filter_type();
+	}
+
+	private function filter_type() {
+		if ( in_array('c', $this->tags) || in_array('chapter', $this->tags) ) {
+			$this->level = 0;
+			return 'chapter';
+		}
+
+		if ( in_array('v', $this->tags) || in_array('video', $this->tags) )
+			return 'video';
+
+		if ( in_array('i', $this->tags) || in_array('image', $this->tags) )
+			return 'image';
+
+		if ( in_array('a', $this->tags) || in_array('audio', $this->tags) )
+			return 'audio';
+
+		// To be added.
+		return;
+	}
 }
 
-class OSFShownote {
+class Shownotes {
+	public $source;
+	public $reserved_categories = array( 
+				'c', 'chapter',
+				'i', 'image',
+				'a', 'audio',
+				'v', 'video'
+				// To be added.
+			);
 
-    function __construct() {
-        $this->timestamp    = NULL;
-        $this->title        = NULL;
-        $this->link         = NULL;
-        $this->level        = NULL;
-        $this->tags         = array();
-        $this->line         = NULL;
-        $this->parent       = NULL;
-        $this->children     = array();
-    }
-
-}
-
-class OSFShownoteProperties {
-
-	function __tostring() {
-		return $this->value;
+	public function __construct() {
+		$this->shownotes = array();
 	}
 
-    function __construct() {
-        $this->value    = NULL;
-        $this->start    = NULL;
-        $this->end      = NULL;
-    }
+	public function order() {
+		// Reverse array to read the items backwards.
+		krsort($this->shownotes);
+		// Collector will be used to collect subitems.
+		$collector = $this->empty_collector();
+		foreach ( $this->shownotes as $shownote_key => $shownote) {
+			if ( $shownote->level == 0 ) {
+				$this->shownotes[$shownote_key]->shownotes = array_reverse($collector['items']);
+				$collector = $this->empty_collector();
+				continue;
+			}
+			if ( $shownote->level == $collector['level'] ) {
+				$collector['items'][] = $shownote;
+				unset($this->shownotes[$shownote_key]);
+				continue;
+			}
+			if ( $shownote->level > $collector['level'] ) {
+				// Check if level depth is valid.
+				if ( $shownote->level - 1 !== $collector['level'] ) {
+					$shownote->isValid = FALSE;
+					$shownote->errorMessage = 'The upper level of items is empty.';
+				}
+
+				$collector = $this->empty_collector();
+				$collector['level'] = $shownote->level;
+				$collector['items'][] = $shownote;
+				unset($this->shownotes[$shownote_key]);
+				continue;
+			}
+			if ( $shownote->level < $collector['level'] ) {
+				krsort($collector['items']);
+				$this->shownotes[$shownote_key]->shownotes = array_reverse($collector['items']);
+				$collector = $this->empty_collector();
+				$collector['level'] = $shownote->level;
+				$collector['items'][] = $shownote;
+				unset($this->shownotes[$shownote_key]);
+				continue;
+			}
+		}
+		// Reverse array.
+		ksort($this->shownotes);
+	}
+
+	private function empty_collector() {
+		return array(
+				'level' => 0,
+				'items'	=> array()
+			);
+	}
+
+	public function parse() {
+		// This will be the array filled with shownotes
+		$shownotes = array();
+
+		// Indicators
+		$linenumber 			= 0;
+		$shownote_id 			= 0;
+		$initial_unix_timestamp = 0;
+
+		// Remove the Header here. It is not needed for parsing the shownotes.
+		if( $header_closure_position = strpos($this->source, '/HEADER') ) {
+		    $linenumber = substr_count($this->source, "\n", 0, $header_closure_position) + 1; // Adjusting the linenumber.
+		    $this->source = substr( $this->source, strpos($this->source, '/HEADER') + 7 );
+		}
+
+		/*
+		 * Header is removed. Now we can start parsing every single line.
+		 */
+		foreach ( explode("\n", $this->source) as $line) {
+			// Remove white-spaces.
+			$line = trim($line);
+			// Skip empty lines.
+			if ( ! $line ) {
+				$linenumber++;
+				continue;
+			}
+			
+			// Create new Shownote object (every line should contain Shownotes).
+			$shownote = new Shownote();
+			$shownote->line = $linenumber;
+			// Check for Tags.
+			preg_match_all('/\s+#(\w+)/i', $line, $tags );
+			$shownote->tags = $tags[1]; // Second element in array contains the tags.
+			// Remove the tags from the line.
+			foreach ( $tags[0] as $tag ) {
+				$line = $this->remove_from_line( $line, $tag );
+			}
+			// With respect to the tags, set the type.
+			$shownote->set_type();
+			// Check for URLs.
+			preg_match_all('/\s+<(.*)>/i', $line, $url );
+			if ( isset( $url[1][0] ) && isset( $url[0][0] ) ) {
+				if ( count($url[1]) > 1 || strrpos($url[1][0], " ") ) {
+					$shownote->isValid = FALSE;
+					$shownote->errorMessage = 'Shownote contains multiple URLs.';
+				}
+				$line = $this->remove_from_line( $line, $url[0][0] );
+				$shownote->url = $url[1][0];
+			}
+			// Fetch the timestamps.
+			preg_match('/^([0-9|:|.]+)/i', $line, $timestamp);
+			if ( isset( $timestamp[0] ) ) {
+				$timestamp_in_unix_format = strtotime('@'.$timestamp[0]); // Need to check for specific unix date!
+				if ( $initial_unix_timestamp == 0 ) {
+					$initial_unix_timestamp = $timestamp_in_unix_format;
+				}
+				$shownote->timestamp = $timestamp_in_unix_format - $initial_unix_timestamp;
+				$line = $this->remove_from_line( $line, $timestamp[0] );
+			}
+			// Fetch the level.
+			preg_match('/^[-][\s|-]/i', trim($line), $hierachie);
+			if ( isset( $hierachie[0] ) ) {
+				$line = $this->remove_from_line( $line, $hierachie[0] );
+				$shownote->level = substr_count($hierachie[0], '-') + 1;
+			}
+			// The rest will be the title of the line.
+			$shownote->title = trim($line);
+			$shownote->unescape_title_chars();
+
+			$this->shownotes[] = $shownote;
+			$linenumber++;
+		}
+	}
+
+	private function remove_from_line( $string, $to_be_removed ) {
+		$modifier = str_replace('/', '\/', $to_be_removed);
+		$modifier = str_replace('.', '\.', $modifier);
+		$modifier = str_replace('-', '\-', $modifier);
+		$modifier = str_replace('?', '\?', $modifier);
+		$modifier = str_replace('+', '\+', $modifier);
+		$modifier = str_replace('(', '\(', $modifier);
+		$modifier = str_replace(')', '\)', $modifier);
+		return preg_replace("/".$modifier."/i", '', $string, 1);
+	}
+
+
 
 }
 
