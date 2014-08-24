@@ -270,6 +270,20 @@ function admin_scripts_and_styles() {
 		false
 	);
 	wp_enqueue_style('osfx_settings_styles');
+
+	wp_register_script(
+		'majax',
+		plugins_url() . '/OSFX/lib/majaX/majax.min.js',
+		false
+	);
+	wp_enqueue_script('majax');
+
+	wp_register_script(
+		'osfx_js',
+		plugins_url() . '/OSFX/lib/osfx.js',
+		false
+	);
+	wp_enqueue_script('osfx_js');
 }
 
 function scripts_and_styles() {
@@ -290,6 +304,18 @@ function shownote_box() {
 		function() use ( $post ) {
 			?>
 				<textarea class="large-text" name="_osfx_shownotes" id="_osfx_shownotes" style="height: 200px;"><?php echo get_post_meta( $post->ID, 'osfx_shownotes' , TRUE); ?></textarea>
+				<p>
+					<?php if ( $showpadid = get_option('osfx_showpad') ) : ?>
+					<select id="importId"></select>
+					<input type="button" class="button" 
+							onclick="importShownotes(document.getElementById('_osfx_shownotes'), document.getElementById('importId').value, 'http://cdn.simon.waldherr.eu/projects/showpad-api/getPad/?id=$$$')" 
+							value="Import" />
+					<script type="text/javascript">
+						var shownotesname = '<?php echo $showpadid; ?>';
+						getPadList(document.getElementById('importId'),shownotesname);
+					</script>
+					<?php endif; ?>
+				</p>
 				<script type="text/javascript">
 					var editor = CodeMirror.fromTextArea(document.getElementById("_osfx_shownotes"), {
 					  mode: "application/xml",
@@ -298,7 +324,7 @@ function shownote_box() {
 					  lineWrapping: true,
 					  mode: 'text/x-osf'
 					});
-				</script>
+				</script>								
 			<?php
 		},
 		'podcast' );
