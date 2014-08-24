@@ -368,11 +368,12 @@ add_shortcode( 'shownotes', 'template' );
 
 class Shownote {
 	function __construct() {
-		$this->type 		= FALSE;
+		$this->type 		= 'note';
 		$this->timestamp 	= FALSE;
 		$this->title 		= '';
 		$this->url			= FALSE;
 		$this->tags 		= FALSE;
+		$this->revision 	= FALSE;
 		$this->level 		= 1;
 		$this->shownotes	= array();
 
@@ -399,16 +400,23 @@ class Shownote {
 			return 'chapter';
 		}
 
-		if ( in_array('v', $this->tags) || in_array('video', $this->tags) )
-			return 'video';
+		if ( in_array('l', $this->tags) || in_array('link', $this->tags) )
+			return 'link';
 
-		if ( in_array('i', $this->tags) || in_array('image', $this->tags) )
-			return 'image';
+		if ( in_array('g', $this->tags) || in_array('glosarry', $this->tags) )
+			return 'glosarry';
 
-		if ( in_array('a', $this->tags) || in_array('audio', $this->tags) )
-			return 'audio';
+		if ( in_array('t', $this->tags) || in_array('topic', $this->tags) )
+			return 'topic';
 
-		// To be added.
+		if ( in_array('q', $this->tags) || in_array('quote', $this->tags) )
+			return 'quote';
+
+		if ( in_array('r', $this->tags) || in_array('revision', $this->tags) ) {
+			$this->revision = true;
+			return;
+		}		
+
 		return;
 	}
 }
@@ -417,10 +425,10 @@ class Shownotes {
 	public $source;
 	public $reserved_categories = array( 
 				'c', 'chapter',
-				'i', 'image',
-				'a', 'audio',
-				'v', 'video'
-				// To be added.
+				'l', 'link',
+				'g', 'glosarry',
+				't', 'topic',
+				'q', 'quote'
 			);
 
 	public function __construct() {
