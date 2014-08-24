@@ -372,7 +372,7 @@ class Shownote {
 		$this->timestamp 	= FALSE;
 		$this->title 		= '';
 		$this->url			= FALSE;
-		$this->tags 		= FALSE;
+		$this->tags 		= array();
 		$this->revision 	= FALSE;
 		$this->level 		= 1;
 		$this->shownotes	= array();
@@ -403,8 +403,8 @@ class Shownote {
 		if ( in_array('l', $this->tags) || in_array('link', $this->tags) )
 			return 'link';
 
-		if ( in_array('g', $this->tags) || in_array('glosarry', $this->tags) )
-			return 'glosarry';
+		if ( in_array('g', $this->tags) || in_array('glossary', $this->tags) )
+			return 'glossary';
 
 		if ( in_array('t', $this->tags) || in_array('topic', $this->tags) )
 			return 'topic';
@@ -426,7 +426,7 @@ class Shownotes {
 	public $reserved_categories = array( 
 				'c', 'chapter',
 				'l', 'link',
-				'g', 'glosarry',
+				'g', 'glossary',
 				't', 'topic',
 				'q', 'quote'
 			);
