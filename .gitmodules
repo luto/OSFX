@@ -1,6 +1,3 @@
-[submodule "styles/icons/BitmapWebIcons"]
-	path = styles/icons/BitmapWebIcons
-	url = https://github.com/SimonWaldherr/BitmapWebIcons.git
 [submodule "codemirror-osf"]
 	path = lib/codemirror/mode/codemirror-osf
 	url = https://github.com/chemiker/codemirror-osf.git

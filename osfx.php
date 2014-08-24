@@ -140,27 +140,6 @@ function osfx_settings_page() {
 	       			<label for="osfx_template">Use the Twig Template Syntax to edit the way how your Shownotes are displayed</label>
 	       		</td>
 	        </tr>
-	         <tr valign="top">
-	         	<th scope="row">
-	         		Style
-	         	</th>
-	        		<td>
-	        			<?php
-	        				$styles = array( 
-	        						'None' => '',
-	        						'Bitmap' => 'bitmap.css.php'
-	        					);
-	        			?>
-	        			<select id="osfx_style" name="osfx_style">
-	        				<?php
-	        					foreach ( $styles as $style_name => $style_file ) {
-	        						echo "<option value='" . $style_file . "' " . ( get_option('osfx_style') == $style_file ? 'selected' : '' ) . " >" . $style_name . "</option>";
-	        					}
-	        				?>
-	        			</select>
-	        			<label for="osfx_style">If you want, you can use one of the default styles, which will style your shownotes</label>
-	        		</td>
-	         </tr>
 		</table>
 		<h3>Import from ShowPad</h3>
 		The plugin allows you to easily import Shownotes from Showpad.
@@ -335,6 +314,33 @@ function template() {
 
 	$loader = new Twig_Loader_String();
 	$twig = new Twig_Environment($loader);
+
+	/*
+	 * Implement additional Twig functions
+	 */
+	// Get the Favicon for the current website via Google S2
+	$getURLIcon = new Twig_SimpleFunction( 'getURLIcon', function ( $shownote ) {
+	    return "https://www.google.com/s2/favicons?domain=" . $shownote->url;
+	} );
+	$twig->addFunction($getURLIcon);
+	$URLIcon = new Twig_SimpleFunction( 'URLIcon', function ( $shownote ) {
+		if ( empty( $shownote->url ) )
+			return;
+
+	    return "<img src=\"https://www.google.com/s2/favicons?domain=" . $shownote->url . "\" alt=\"" . $shownote->title ."\" title=\"" . $shownote->title ."\" />";
+	}, array('is_safe' => array('html') ) );
+	$twig->addFunction($URLIcon);
+
+	// Link the title if it has a URL
+	$linkedTitle = new Twig_SimpleFunction( 'linkedTitle', function ( $shownote ) {
+		if ( empty( $shownote->url ) )
+			return $shownote->title;
+
+		return "<a href=\"" . $shownote->url . "\">" . $shownote->title . "</a>";
+	}, array('is_safe' => array('html') ) );
+	$twig->addFunction($linkedTitle);
+
+
 	$source = get_post_meta( $post->ID, 'osfx_shownotes' , TRUE);
 
 	if ( !$source )
