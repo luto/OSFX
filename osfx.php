@@ -312,6 +312,14 @@ function shownote_box() {
 function template() {
 	global $post;
 
+	$source = get_post_meta( $post->ID, 'osfx_shownotes' , TRUE);
+	if ( !$source )
+		return;
+
+	$shownotes = new Shownotes();
+	$shownotes->source = $source;
+	$shownotes->parse();
+
 	$loader = new Twig_Loader_String();
 	$twig = new Twig_Environment($loader);
 
@@ -340,28 +348,26 @@ function template() {
 	}, array('is_safe' => array('html') ) );
 	$twig->addFunction($linkedTitle);
 
+	// Order the Shownotes
+	$nest = new Twig_SimpleFilter( "nest", function ( $notes ) use ( $shownotes ) {
+	    $shownotes->order();
+	    return $shownotes->shownotes;
+	});
+	$twig->addFilter($nest);
 
-	$source = get_post_meta( $post->ID, 'osfx_shownotes' , TRUE);
-
-	if ( !$source )
-		return;
-
-	$shownotes = new Shownotes();
-	$shownotes->source = $source;
-	$shownotes->parse();
-	$entries = $shownotes->shownotes;
-	$shownotes->order();
-	$chapters = $shownotes->shownotes; 
+	// Display a specific type only
+	$filtertype = new Twig_SimpleFilter( "type", function ( $notes, $type ) use ( $shownotes ) {
+	    $shownotes->filter_by_property( "type", $type );
+	    return $shownotes->shownotes;
+	});
+	$twig->addFilter($filtertype);
 
 	return $twig->render(
-		   get_option('osfx_template'),
+		get_option('osfx_template'),
 			array(
-				'shownotes' => array(
-						'entries' => $entries,
-						'chapters' => $chapters
-					)
+					'shownotes' => $shownotes->shownotes
 				)
-		   );
+		);
 
 }
 add_shortcode( 'shownotes', 'template' );
@@ -433,6 +439,15 @@ class Shownotes {
 
 	public function __construct() {
 		$this->shownotes = array();
+	}
+
+	public function filter_by_property( $property, $value ) {
+		$this->shownotes = array_filter($this->shownotes, function ( $shownote ) use ( $property, $value ) {
+			if ( $shownote->$property == $value )
+				return true;
+
+			return false;
+		});
 	}
 
 	public function order() {
@@ -545,10 +560,11 @@ class Shownotes {
 				$line = $this->remove_from_line( $line, $timestamp[0] );
 			}
 			// Fetch the level.
-			preg_match('/^[-][\s|-]/i', trim($line), $hierachie);
+			preg_match('/^[-][\s|-]+/i', trim($line), $hierachie);
 			if ( isset( $hierachie[0] ) ) {
 				$line = $this->remove_from_line( $line, $hierachie[0] );
-				$shownote->level = substr_count($hierachie[0], '-') + 1;
+				$level = substr_count($hierachie[0], '-') + 1;
+				$shownote->level = ( $level > 2 ? 2 : $level ); // For any level depth higher than two, we set it to two.
 			}
 			// The rest will be the title of the line.
 			$shownote->title = trim($line);
