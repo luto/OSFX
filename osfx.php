@@ -104,8 +104,8 @@ function admin_menu() {
 function register_settings() {
 	register_setting( 'osfx_options', 'osfx_search' );
 	register_setting( 'osfx_options', 'osfx_template' );
-	register_setting( 'osfx_options', 'osfx_style' );
 	register_setting( 'osfx_options', 'osfx_showpad' );
+	register_setting( 'osfx_options', 'osfx_affiliations' );
 }
 
 function osfx_settings_page() {
@@ -161,7 +161,7 @@ function osfx_settings_page() {
 
 		        		</tbody>
 		        	</table>
-		        	<input type="button" id="add_affiliate_program" value="+" />
+		        	<input type="button" class="button" id="add_affiliate_program" value="+" />
 		        </td>
 	        </tr>
 	    </table>
@@ -169,36 +169,70 @@ function osfx_settings_page() {
 	    <script type="text/template" id="affiliate_line_template">
 	    	<tr>
 	    		<td>
-	    			<select class="chosen affiliate_programs">
+	    			<select class="chosen affiliate_programs" name="osfx_affiliations[{{counter}}][affiliate_program]">
 	    				<option value="">&nbsp;</option>
 	    			</select>
 	    		</td>
 	    		<td>
-	    			<input type="text" placeholder="Affiliate ID" />
+	    			<input type="text" placeholder="Affiliate ID" value="{{affiliate-id}}" name="osfx_affiliations[{{counter}}][affiliate_id]" />
 	    		</td>
 	    		<td>
-	    			Delete
+	    			<span class="delete_affiliate_program"></span>
 	    		</td>
 	    	</tr>
 	    </script>
+	    <?php 
+	    	$existing_affiliations = get_option('osfx_affiliations');
+	    	$for_js_existing_affiliation = array();
+	    	if ( ! empty($existing_affiliations) )
+	    		foreach ($existing_affiliations as $existing_affiliation) {
+	    			$for_js_existing_affiliation[$existing_affiliation['affiliate_program']] = $existing_affiliation['affiliate_id'];
+	    		}
+	    ?>
 	    <script type="text/javascript">
+	    	var counter = 0;
 	    	var affiliate_programs = <?php echo json_encode($affiliate_programs); ?>;
-	    	var existing_affiliation = [ "5", "12", "13" ];
+	    	var existing_affiliation = <?php echo json_encode($for_js_existing_affiliation); ?>;
 
 	    	(function($) {
 	    	  $( document ).ready( function() {
 	    	  	$("#add_affiliate_program").on( 'click', function () {
-	    	  		$("#affiliate_program_table_body").append( $("#affiliate_line_template").html() );
+	    	  		var source = $("#affiliate_line_template").html();
+	    	  		source = source.replace( /\{\{affiliate-id\}\}/g, "" );
+	    	  		source = source.replace( /\{\{counter\}\}/g, counter );
+	    	  		counter++;
+
+	    	  		$("#affiliate_program_table_body").append( source );
 	    	  		populate_dropdowns();
+	    	  		$(".chosen").chosenImage();
+
+	    	  		$(".delete_affiliate_program").on( 'click', function() {
+	    	  			$(this).closest("tr").remove();	
+	    	  		} );
 	    	  	});
 
 	    	  	$.each( existing_affiliation, function ( id ) {
 	    	  		add_affiliation(id);
+	    	  		$(".delete_affiliate_program").on( 'click', function() {
+	    	  			$(this).closest("tr").remove();	
+	    	  		} );
 	    	  	});
 
 	    	  	function add_affiliation( id ) {
+	    	  		affiliation = affiliate_programs[id];
 	    	  		source = $("#affiliate_line_template").html();
+	    	  		// Fill in the provided information
+	    	  		source = source.replace( /\{\{affiliate-id\}\}/g, existing_affiliation[id] );
+	    	  		source = source.replace( /\{\{counter\}\}/g, counter );
+	    	  		counter++;
+	    	  		// Append new row
 	    	  		$("#affiliate_program_table_body").append( source );
+	    	  		
+	    	  		row = $("#affiliate_program_table_body tr:last");
+	    	  		populate_dropdowns();
+	    	  		// Select the correct affiliate program
+	    	  		row.find('select.affiliate_programs option[value="' + id + '"]').attr('selected',true);
+	    	  		$(".chosen").chosenImage();
 	    	  	}
 
 	    	    function populate_dropdowns() {
@@ -206,7 +240,6 @@ function osfx_settings_page() {
 	    	    		$(".affiliate_programs").append("<option value='" + id + "' data-img-src='<?php echo plugins_url() ?>/OSFX/img/" + affiliate_program.icon + "'>" + affiliate_program.title +"</option>");
 	    	    		
 	    	    	});
-	    	    	$(".chosen").chosenImage();
 	    	    }
 
 	    	    populate_dropdowns();
