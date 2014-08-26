@@ -141,6 +141,79 @@ function osfx_settings_page() {
 	       		</td>
 	        </tr>
 		</table>
+		<h3>Affiliation</h3>
+		Configure your affiliate programs.
+		<table class="form-table">        
+	        <tr valign="top">
+		        <th scope="row">
+		        	Affiliations
+		        </th>
+		        <td>
+		        	<table class="podlove_alternating" border="0" cellspacing="0">
+		        		<thead>
+		        			<tr>
+		        				<th>Affiliate Program</th>
+		        				<th>Affiliate ID</th>
+		        				<th>Delete</th>
+		        			</tr>
+		        		</thead>
+		        		<tbody id="affiliate_program_table_body">
+
+		        		</tbody>
+		        	</table>
+		        	<input type="button" id="add_affiliate_program" value="+" />
+		        </td>
+	        </tr>
+	    </table>
+	    <?php require('lib/affiliate_programs.php'); ?>
+	    <script type="text/template" id="affiliate_line_template">
+	    	<tr>
+	    		<td>
+	    			<select class="chosen affiliate_programs">
+	    				<option value="">&nbsp;</option>
+	    			</select>
+	    		</td>
+	    		<td>
+	    			<input type="text" placeholder="Affiliate ID" />
+	    		</td>
+	    		<td>
+	    			Delete
+	    		</td>
+	    	</tr>
+	    </script>
+	    <script type="text/javascript">
+	    	var affiliate_programs = <?php echo json_encode($affiliate_programs); ?>;
+	    	var existing_affiliation = [ "5", "12", "13" ];
+
+	    	(function($) {
+	    	  $( document ).ready( function() {
+	    	  	$("#add_affiliate_program").on( 'click', function () {
+	    	  		$("#affiliate_program_table_body").append( $("#affiliate_line_template").html() );
+	    	  		populate_dropdowns();
+	    	  	});
+
+	    	  	$.each( existing_affiliation, function ( id ) {
+	    	  		add_affiliation(id);
+	    	  	});
+
+	    	  	function add_affiliation( id ) {
+	    	  		source = $("#affiliate_line_template").html();
+	    	  		$("#affiliate_program_table_body").append( source );
+	    	  	}
+
+	    	    function populate_dropdowns() {
+	    	    	$.each( affiliate_programs, function ( id, affiliate_program ) {
+	    	    		$(".affiliate_programs").append("<option value='" + id + "' data-img-src='<?php echo plugins_url() ?>/OSFX/img/" + affiliate_program.icon + "'>" + affiliate_program.title +"</option>");
+	    	    		
+	    	    	});
+	    	    	$(".chosen").chosenImage();
+	    	    }
+
+	    	    populate_dropdowns();
+	    	  });
+	    	}(jQuery));
+
+	    </script>
 		<h3>Import from ShowPad</h3>
 		The plugin allows you to easily import Shownotes from Showpad.
 		<table class="form-table">        
@@ -263,15 +336,35 @@ function admin_scripts_and_styles() {
 		false
 	);
 	wp_enqueue_script('osfx_js');
+
+	wp_register_script(
+		'chosen',
+		plugins_url() . '/OSFX/lib/chosen/chosen.jquery.min.js',
+		false
+	);
+	wp_enqueue_script('chosen');
+
+	wp_register_script(
+		'chosen_image',
+		plugins_url() . '/OSFX/lib/chosen/chosenImage.jquery.js',
+		false
+	);
+	wp_enqueue_script('chosen_image');
 }
 
 function scripts_and_styles() {
 	wp_register_style(
-		'osfx_shownote_icons',
-		plugins_url() . '/OSFX/styles/bitmap.css.php',
+		'chosen_image',
+		plugins_url() . '/OSFX/styles/chosenImage.css',
 		false
 	);
-	wp_enqueue_style('osfx_shownote_icons');
+	wp_enqueue_style('chosen_image');
+	wp_register_style(
+		'chosen',
+		plugins_url() . '/OSFX/styles/chosen.min.css',
+		false
+	);
+	wp_enqueue_style('chosen');
 }
 
 function shownote_box() {
