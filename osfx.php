@@ -16,7 +16,6 @@ require( 'vendor/autoload.php' );
 add_action( 'add_meta_boxes', 'shownote_box' );
 add_action( 'save_post', 'save_shownotes' );
 
-add_action( 'wp_print_styles', 'scripts_and_styles' );
 add_action( 'admin_print_styles', 'admin_scripts_and_styles' );
 
 add_action( 'admin_menu', 'admin_menu' );
@@ -276,7 +275,7 @@ function osfx_settings_page() {
 }
 
 function save_shownotes( $post_id ) {
-	update_post_meta( $post_id, 'osfx_shownotes', $_POST['_osfx_shownotes'] );
+	update_post_meta( $post_id, '_shownotes', $_POST['_osfx_shownotes'] );
 }
 
 function admin_scripts_and_styles() {
@@ -385,21 +384,6 @@ function admin_scripts_and_styles() {
 	wp_enqueue_script('chosen_image');
 }
 
-function scripts_and_styles() {
-	wp_register_style(
-		'chosen_image',
-		plugins_url() . '/OSFX/styles/chosenImage.css',
-		false
-	);
-	wp_enqueue_style('chosen_image');
-	wp_register_style(
-		'chosen',
-		plugins_url() . '/OSFX/styles/chosen.min.css',
-		false
-	);
-	wp_enqueue_style('chosen');
-}
-
 function shownote_box() {
 	global $post;
 
@@ -408,7 +392,7 @@ function shownote_box() {
 		'Shownotes',
 		function() use ( $post ) {
 			?>
-				<textarea class="large-text" name="_osfx_shownotes" id="_osfx_shownotes" style="height: 200px;"><?php echo get_post_meta( $post->ID, 'osfx_shownotes' , TRUE); ?></textarea>
+				<textarea class="large-text" name="_osfx_shownotes" id="_osfx_shownotes" style="height: 200px;"><?php echo get_post_meta( $post->ID, '_shownotes' , TRUE); ?></textarea>
 				<p>
 					<?php if ( $showpadid = get_option('osfx_showpad') ) : ?>
 					<select id="importId"></select>
@@ -438,7 +422,7 @@ function shownote_box() {
 function template() {
 	global $post;
 
-	$source = get_post_meta( $post->ID, 'osfx_shownotes' , TRUE);
+	$source = get_post_meta( $post->ID, '_shownotes' , TRUE);
 	if ( !$source )
 		return;
 
@@ -712,7 +696,7 @@ class Shownotes {
 			// Fetch the timestamps.
 			preg_match('/^([0-9|:|.]+)/i', $line, $timestamp);
 			if ( isset( $timestamp[0] ) ) {
-				$timestamp_in_unix_format = strtotime('@'.$timestamp[0]); // Need to check for specific unix date!
+				$timestamp_in_unix_format = strtotime( ( $this->isValidTimeStamp($timestamp[0]) ? '@' : '' ).$timestamp[0]); // Need to check for specific unix date!
 				if ( $initial_unix_timestamp == 0 ) {
 					$initial_unix_timestamp = $timestamp_in_unix_format;
 				}
@@ -729,10 +713,19 @@ class Shownotes {
 			// The rest will be the title of the line.
 			$shownote->title = trim($line);
 			$shownote->unescape_title_chars();
+			$shownote->title = htmlspecialchars($shownote->title);
 
 			$this->shownotes[] = $shownote;
+
 			$linenumber++;
 		}
+	}
+
+	private function isValidTimeStamp($timestamp) {
+	// From https://stackoverflow.com/questions/2524680/check-whether-the-string-is-a-unix-timestamp
+    	return ((string) (int) $timestamp === $timestamp) 
+        	&& ($timestamp <= PHP_INT_MAX)
+        	&& ($timestamp >= ~PHP_INT_MAX);
 	}
 
 	private function remove_from_line( $string, $to_be_removed ) {
