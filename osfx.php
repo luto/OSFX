@@ -488,6 +488,13 @@ function template() {
 	});
 	$twig->addFilter($filtertype);
 
+	// Affiliate the links
+	$affiliate = new Twig_SimpleFilter( "affiliate", function ( $shownote ) {
+		$shownote->affiliate();
+		return $shownote;
+	});
+	$twig->addFilter($affiliate);
+
 	return $twig->render(
 		get_option('osfx_template'),
 			array(
@@ -512,6 +519,31 @@ class Shownote {
 		$this->isValid		= TRUE;
 		$this->errorMessage	= '';
 		$this->line			= 0;
+	}
+
+	public function affiliate() {
+		if ( ! $this->url )
+			return;
+
+		require('lib/affiliate_programs.php');
+
+		$existing_affiliations = get_option('osfx_affiliations');
+
+		if ( empty($existing_affiliations) )
+			return;
+
+		foreach ( $existing_affiliations as $existing_affiliation ) {
+			if ( strpos( $this->url, $affiliate_programs[$existing_affiliation['affiliate_program']]['url_fragment'] ) === FALSE )
+				continue;
+
+			$this->url = preg_replace($affiliate_programs[$existing_affiliation['affiliate_program']]['search_fragment'], 
+				str_replace( 
+						"{{affiliate-id}}", 
+						$existing_affiliation['affiliate_id'], 
+						$affiliate_programs[$existing_affiliation['affiliate_program']]['replace_fragment']
+					), 
+				$this->url);
+		}
 	}
 
 	// For validation check if < is escaped!
