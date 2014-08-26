@@ -536,6 +536,8 @@ class Shownote {
 			if ( strpos( $this->url, $affiliate_programs[$existing_affiliation['affiliate_program']]['url_fragment'] ) === FALSE )
 				continue;
 
+			$this->tags[] = 'affiliation';
+
 			$this->url = preg_replace($affiliate_programs[$existing_affiliation['affiliate_program']]['search_fragment'], 
 				str_replace( 
 						"{{affiliate-id}}", 
