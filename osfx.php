@@ -482,7 +482,8 @@ function template() {
 	return $twig->render(
 		get_option('osfx_template'),
 			array(
-					'shownotes' => $shownotes->shownotes
+					'shownotes' => $shownotes->shownotes,
+					'header' => $shownotes->header
 				)
 		);
 
@@ -501,7 +502,7 @@ class Shownote {
 		$this->shownotes	= array();
 
 		$this->isValid		= TRUE;
-		$this->errorMessage	= '';
+		$this->errorMessage	= array();
 		$this->line			= 0;
 	}
 
@@ -573,13 +574,6 @@ class Shownote {
 
 class Shownotes {
 	public $source;
-	public $reserved_categories = array( 
-				'c', 'chapter',
-				'l', 'link',
-				'g', 'glossary',
-				't', 'topic',
-				'q', 'quote'
-			);
 
 	public function __construct() {
 		$this->shownotes = array();
@@ -614,7 +608,7 @@ class Shownotes {
 				// Check if level depth is valid.
 				if ( $shownote->level - 1 !== $collector['level'] ) {
 					$shownote->isValid = FALSE;
-					$shownote->errorMessage = 'The upper level of items is empty.';
+					$shownote->errorMessage[] = 'The upper level of items is empty.';
 				}
 
 				$collector = $this->empty_collector();
@@ -644,10 +638,54 @@ class Shownotes {
 			);
 	}
 
+	private function parse_contributor_list( $list ) {
+		$contributors = array();
+
+		foreach ( explode( "," , $list ) as $contributor_entry_raw ) {
+			if ( preg_match( "/([a-z\s]+)[^<]+<(.*)>/i" , $contributor_entry_raw, $contributor ) ) {
+				$contributors[] = array( 'name' => trim($contributor[1]), 'url' => trim($contributor[2]));
+			} elseif ( !empty( $contributor_entry_raw ) ) {
+				$contributors[] = array( 'name' => trim($contributor_entry_raw) );
+			}
+		}
+
+		return $contributors;
+	}
+
+	public function header() {
+		$raw_header = $this->header;
+		$header = array();
+
+		foreach ( explode( "\n", $raw_header ) as $line ) {
+			preg_match( "/([a-z]+):\s(.*)/i", $line, $matched_header_entry ); // [1] var, [2] value
+			$header[trim(strtolower($matched_header_entry[1]))] = trim($matched_header_entry[2]);
+		}
+
+		$this->header = $header;
+		// Convert starttime to date
+		if ( $this->header['starttime'] )
+			$this->header['starttime'] = strtotime($this->header['starttime']);
+		// Convert endtime to date
+		if ( $this->header['endtime'] )
+			$this->header['endtime'] = strtotime($this->header['endtime']);
+		// List Podcast and Shownoter
+		if ( $this->header['shownoter'] )
+			$this->header['shownoter'] = $this->parse_contributor_list($this->header['shownoter']);
+		if ( $this->header['podcaster'] )
+			$this->header['podcaster'] = $this->parse_contributor_list($this->header['podcaster']);
+	}
+
 	public function parse() {
 		// This will be the array filled with shownotes
 		$shownotes = array();
-
+		// Dictonary containing all reserved categories
+		$reserved_categories = array( 
+					'c' => 'chapter',
+					'l' => 'link',
+					'g' => 'glossary',
+					't' => 'topic',
+					'q' => 'quote'
+				);
 		// Indicators
 		$linenumber 			= 0;
 		$shownote_id 			= 0;
@@ -656,7 +694,9 @@ class Shownotes {
 		// Remove the Header here. It is not needed for parsing the shownotes.
 		if( $header_closure_position = strpos($this->source, '/HEADER') ) {
 		    $linenumber = substr_count($this->source, "\n", 0, $header_closure_position) + 1; // Adjusting the linenumber.
+		    $this->header = substr( $this->source, 8, strpos($this->source, '/HEADER') - 9 );
 		    $this->source = substr( $this->source, strpos($this->source, '/HEADER') + 7 );
+		    $this->header();
 		}
 
 		/*
@@ -676,11 +716,16 @@ class Shownotes {
 			$shownote->line = $linenumber;
 			// Check for Tags.
 			preg_match_all('/\s+#(\w+)/i', $line, $tags );
-			$shownote->tags = $tags[1]; // Second element in array contains the tags.
 			// Remove the tags from the line.
 			foreach ( $tags[0] as $tag ) {
 				$line = $this->remove_from_line( $line, $tag );
 			}
+			foreach ( $tags[1] as $tagkey => $tag ) {
+				if ( isset($reserved_categories[$tag]) )
+						$tags[1][$tagkey] = $reserved_categories[$tag];
+			}
+
+			$shownote->tags = $tags[1]; // Second element in array contains the tags.
 			// With respect to the tags, set the type.
 			$shownote->set_type();
 			// Check for URLs.
@@ -688,10 +733,14 @@ class Shownotes {
 			if ( isset( $url[1][0] ) && isset( $url[0][0] ) ) {
 				if ( count($url[1]) > 1 || strrpos($url[1][0], " ") ) {
 					$shownote->isValid = FALSE;
-					$shownote->errorMessage = 'Shownote contains multiple URLs.';
+					$shownote->errorMessage[] = 'Shownote contains multiple URLs.';
 				}
 				$line = $this->remove_from_line( $line, $url[0][0] );
-				$shownote->url = $url[1][0];
+				if ( strrpos($url[1][0], "<") ) {
+					$shownote->isValid = FALSE;
+					$shownote->errorMessage[] = 'Shownote contains "<" that needs to be escaped.';
+				}
+				$shownote->url = urlencode($url[1][0]); // There are no invalid URLs
 			}
 			// Fetch the timestamps.
 			preg_match('/^([0-9|:|.]+)/i', $line, $timestamp);
