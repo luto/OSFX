@@ -520,20 +520,16 @@ function template( $args, $template=NULL ) {
 	if ( !$source )
 		return;
 
-	if ( !$template )
+	if ( $template ) {
+		// Replace the WordPress "smart" quotes
+		$template = html_entity_decode($template);
+		$template = str_replace("“", "\"", $template);
+		$template = str_replace("”", "\"", $template);
+		$template = str_replace("‘", "\"", $template);
+		$template = str_replace("’", "\"", $template);
+	} else {
 		$template = get_option('osfx_template');
-
-	// Replace the WordPress "smart" quotes
-	$template = html_entity_decode($template);
-	$template = str_replace("“", "\"", $template);
-	$template = str_replace("”", "\"", $template);
-	$template = str_replace("‘", "\"", $template);
-	$template = str_replace("’", "\"", $template);
-
-	// Kick out <p> and <br /> added by WordPress. Thanks for that btw!
-	$template = str_replace("<p>", "", $template);
-	$template = str_replace("</p>", "", $template);
-	$template = str_replace("<br />", "", $template);
+	}
 
 	$shownotes = new Shownotes();
 	$shownotes->source = $source;
