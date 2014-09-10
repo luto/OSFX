@@ -21,9 +21,11 @@ add_action( 'admin_print_styles', 'admin_scripts_and_styles' );
 add_action( 'admin_menu', 'admin_menu' );
 add_action( 'admin_init', 'register_settings' );
 
+add_action( 'wp_ajax_osfx-chapters', 'ajax_chapters' );
+add_action( 'wp_ajax_osfx-validate', 'ajax_validate' );
+
 add_filter( 'posts_clauses', 'shownotes_search_where', 20, 1 );
 add_filter( 'posts_groupby', 'shownotes_groupby' );
-
 
 /*
  * Code by Robert Schmidl. 
@@ -274,6 +276,52 @@ function osfx_settings_page() {
 	<?php
 }
 
+function ajax_chapters() {
+	$chapters = "";
+
+	if ( ! $_POST["source"] )
+		return;
+
+	$shownotes = new Shownotes();
+	$shownotes->source = $_POST["source"];
+	$shownotes->parse();
+
+	foreach ($shownotes->shownotes as $shownote ) {
+		if ( $shownote->type == "chapter" )
+			$chapters .= date( "H:i:s", $shownote->timestamp ) . " " . $shownote->title . ( $shownote->url ? " <" . $shownote->url . ">" : "" ) . "\n";
+	}
+
+	respond_with_json( $chapters );
+}
+
+function ajax_validate() {
+	$errors = "";
+
+	if ( ! $_POST["source"] )
+		return;
+
+	$shownotes = new Shownotes();
+	$shownotes->source = $_POST["source"];
+	$shownotes->parse();
+
+	foreach ($shownotes->shownotes as $shownote ) {
+		if ( $shownote->isValid )
+			continue;
+
+		$errors .= "<tr><td>" . $shownote->line .  "</td><td>" . implode( "<br />", $shownote->errorMessage ) . "</td></tr>\n";
+	}
+
+	respond_with_json( $errors );
+}
+
+function respond_with_json($result) {
+	header( 'Cache-Control: no-cache, must-revalidate' );
+	header( 'Expires: Mon, 26 Jul 1997 05:00:00 GMT' );
+	header( 'Content-type: application/json' );
+	echo json_encode($result);
+	die();
+}
+
 function save_shownotes( $post_id ) {
 	update_post_meta( $post_id, '_shownotes', $_POST['_osfx_shownotes'] );
 }
@@ -392,19 +440,65 @@ function shownote_box() {
 		'Shownotes',
 		function() use ( $post ) {
 			?>
-				<textarea class="large-text" name="_osfx_shownotes" id="_osfx_shownotes" style="height: 200px;"><?php echo get_post_meta( $post->ID, '_shownotes' , TRUE); ?></textarea>
-				<p>
-					<?php if ( $showpadid = get_option('osfx_showpad') ) : ?>
-					<select id="importId"></select>
-					<input type="button" class="button" 
-							onclick="importShownotes(document.getElementById('_osfx_shownotes'), document.getElementById('importId').value, 'http://cdn.simon.waldherr.eu/projects/showpad-api/getPad/?id=$$$')" 
-							value="Import" />
-					<script type="text/javascript">
-						var shownotesname = '<?php echo $showpadid; ?>';
-						getPadList(document.getElementById('importId'),shownotesname);
-					</script>
-					<?php endif; ?>
-				</p>
+				<div class="wrap">
+					<h2 class="nav-tab-wrapper">
+						<span data-container="source" class="osfx-tab nav-tab nav-tab-active">Source</span>
+						<span data-container="chapters" class="osfx-tab nav-tab" id="osfx-chapters-button">Chapters</span>
+						<span data-container="validation" class="osfx-tab nav-tab" id="osfx-validate-button">Validation</span>
+					</h2>
+					<div id="osfx_tabs_wrapper">
+						<div id="osfx_source" class="osfx-tab-container osfx-visible">
+							<textarea class="large-text" name="_osfx_shownotes" id="_osfx_shownotes" style="height: 200px;"><?php echo get_post_meta( $post->ID, '_shownotes' , TRUE); ?></textarea>
+
+							<?php if ( $showpadid = get_option('osfx_showpad') ) : ?>
+							<p>
+								<select id="importId"></select>
+								<input type="button" class="button" 
+									onclick="importShownotes(document.getElementById('_osfx_shownotes'), document.getElementById('importId').value, 'http://cdn.simon.waldherr.eu/projects/showpad-api/getPad/?id=$$$')" 
+									value="Import" />
+							</p>
+
+							<script type="text/javascript">
+								var shownotesname = '<?php echo $showpadid; ?>';
+								getPadList(document.getElementById('importId'),shownotesname);
+							</script>
+							<?php endif; ?>
+						</div>
+
+						<div id="osfx_chapters"  class="osfx-tab-container">
+							<p>
+								Spinner!
+							</p>
+						</div>
+
+						<div id="osfx_validation" class="osfx-tab-container ">
+							<p>
+								<span id="osfx_validation_status">Your Shownotes seem, to be valid.</span>
+								<table class="form-table" id="osfx_validation_table">        
+							        <tr valign="top">
+								        <td>
+								        	<table class="podlove_alternating" border="0" cellspacing="0">
+								        		<thead>
+								        			<tr>
+								        				<th>Line</th>
+								        				<th>Error</th>
+								        			</tr>
+								        		</thead>
+								        		<tbody id="osfx_validation_table_body" class="code">
+								        			<tr>
+								        				<td></td>
+								        				<td>SPINNER!</td>
+								        			</tr>
+								        		</tbody>
+								        	</table>
+								        </td>
+							        </tr>
+							    </table>
+							</p>
+						</div>
+					</div>
+				</div>
+
 				<script type="text/javascript">
 					var editor = CodeMirror.fromTextArea(document.getElementById("_osfx_shownotes"), {
 					  mode: "application/xml",

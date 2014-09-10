@@ -28,6 +28,38 @@ table.podlove_alternating tr:nth-child(even) {
 	background: #EAEAEA;
 }
 
+div#osfx_tabs_wrapper {
+	border: 1px solid #d3d3d3;
+	border-top: none;
+}
+
+div#osfx_tabs_wrapper p {
+	padding: 1em;
+	margin: 0px;
+}
+
+div#shownotes_meta_field h2.nav-tab-wrapper {
+	padding-bottom: 0px;
+	margin-bottom: 0px;
+}
+
+div#shownotes_meta_field span.nav-tab:hover {
+	cursor: pointer;
+}
+
+div#shownotes_meta_field span.nav-tab-active {
+	background-color: #FFF;
+	border-bottom: none;
+}
+
+div.osfx-tab-container {
+	display: none;
+}
+
+div.osfx-visible {
+	display: block;
+}
+
 @font-face {
 	font-family: 'Podlove';
 	src:url('../fonts/Podlove.eot');
