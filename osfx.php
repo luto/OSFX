@@ -513,12 +513,27 @@ function shownote_box() {
 		'podcast' );
 }
 
-function template() {
+function template( $args, $template=NULL ) {
 	global $post;
 
 	$source = get_post_meta( $post->ID, '_shownotes' , TRUE);
 	if ( !$source )
 		return;
+
+	if ( !$template )
+		$template = get_option('osfx_template');
+
+	// Replace the WordPress "smart" quotes
+	$template = html_entity_decode($template);
+	$template = str_replace("“", "\"", $template);
+	$template = str_replace("”", "\"", $template);
+	$template = str_replace("‘", "\"", $template);
+	$template = str_replace("’", "\"", $template);
+
+	// Kick out <p> and <br /> added by WordPress. Thanks for that btw!
+	$template = str_replace("<p>", "", $template);
+	$template = str_replace("</p>", "", $template);
+	$template = str_replace("<br />", "", $template);
 
 	$shownotes = new Shownotes();
 	$shownotes->source = $source;
@@ -574,7 +589,7 @@ function template() {
 	$twig->addFilter($affiliate);
 
 	return $twig->render(
-		get_option('osfx_template'),
+		$template,
 			array(
 					'shownotes' => $shownotes->shownotes,
 					'header' => $shownotes->header
@@ -583,6 +598,7 @@ function template() {
 
 }
 add_shortcode( 'shownotes', 'template' );
+
 
 class Shownote {
 	function __construct() {
