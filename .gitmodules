@@ -1,3 +1,0 @@
-[submodule "codemirror"]
-	path = lib/codemirror/mode/codemirror-osf
-	url = https://github.com/chemiker/codemirror-osf

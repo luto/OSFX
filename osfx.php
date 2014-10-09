@@ -477,7 +477,7 @@ function shownote_box() {
 
 						<div id="osfx_validation" class="osfx-tab-container ">
 							<p>
-								<span id="osfx_validation_status">Your Shownotes seem, to be valid.</span>
+								<span id="osfx_validation_status"></span>
 								<table class="form-table" id="osfx_validation_table">        
 							        <tr valign="top">
 								        <td>

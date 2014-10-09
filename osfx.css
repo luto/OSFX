@@ -112,3 +112,24 @@ you can use the generic selector below, but it's slower:
 	font-weight: bold;
 	margin-top: -1em;
 }
+
+.isValid,
+.isInValid {
+	display: inline-block;
+	background-repeat: no-repeat;
+	height: 35px;
+	line-height: 30px;
+	font-size: 20px;
+	padding-left: 40px;
+	background-size: 30px;
+}
+
+.isValid {
+	background-image: url('img/ico_checkmark-circled.svg');
+	color: #5E9615;
+}
+
+.isInValid {
+	background-image: url('img/ico_close-circled.svg');
+	color: #B50000;
+}
