@@ -365,7 +365,7 @@ function admin_scripts_and_styles() {
 
 	wp_register_script(
 		'osfx_codemirror_osf',
-		plugins_url() . '/OSFX/lib/codemirror/mode/codemirror-osf/osf.js',
+		plugins_url() . '/OSFX/lib/codemirror/mode/osf/osf.js',
 		false
 	);
 	wp_enqueue_script('osfx_codemirror_osf');
