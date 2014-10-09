@@ -288,7 +288,7 @@ function ajax_chapters() {
 
 	foreach ($shownotes->shownotes as $shownote ) {
 		if ( $shownote->type == "chapter" )
-			$chapters .= date( "H:i:s", $shownote->timestamp ) . " " . $shownote->title . ( $shownote->url ? " <" . $shownote->url . ">" : "" ) . "\n";
+			$chapters .= date( "H:i:s", $shownote->timestamp ) . " " . $shownote->title . ( $shownote->url ? " <" . urldecode($shownote->url) . ">" : "" ) . "\n";
 	}
 
 	respond_with_json( $chapters );
@@ -303,6 +303,7 @@ function ajax_validate() {
 	$shownotes = new Shownotes();
 	$shownotes->source = $_POST["source"];
 	$shownotes->parse();
+	$shownotes->validate();
 
 	foreach ($shownotes->shownotes as $shownote ) {
 		if ( $shownote->isValid )
@@ -455,7 +456,7 @@ function shownote_box() {
 								<select id="importId"></select>
 								<input type="button" class="button" 
 									onclick="importShownotes(document.getElementById('_osfx_shownotes'), document.getElementById('importId').value, 'http://cdn.simon.waldherr.eu/projects/showpad-api/getPad/?id=$$$')" 
-									value="Import" />
+									value="Import from ShowPad" />
 							</p>
 
 							<script type="text/javascript">
@@ -466,8 +467,11 @@ function shownote_box() {
 						</div>
 
 						<div id="osfx_chapters"  class="osfx-tab-container">
-							<p>
+							<p id="osfx_chapters_paragraph">
 								Spinner!
+							</p>
+							<p>
+								<input type="button" class="button"	id="import_into_publisher_button" value="Import into Podlove Publisher" />
 							</p>
 						</div>
 
@@ -481,7 +485,7 @@ function shownote_box() {
 								        		<thead>
 								        			<tr>
 								        				<th>Line</th>
-								        				<th>Error</th>
+								        				<th>Description</th>
 								        			</tr>
 								        		</thead>
 								        		<tbody id="osfx_validation_table_body" class="code">
@@ -834,17 +838,26 @@ class Shownotes {
 			$shownote->tags = $tags[1]; // Second element in array contains the tags.
 			// With respect to the tags, set the type.
 			$shownote->set_type();
+			// @validation: If first entry is not of type "chapter", there should be no chapter entries at all
+			if ( $shownote->type == 'chapter' && isset($this->shownotes[0]) 
+					&& $this->shownotes[0]->type !== 'chapter' 
+					&& !in_array( "Your first entry is not a chapter, but chapters are being used.", $this->shownotes[0]->errorMessage ) ) {
+				$this->shownotes[0]->isValid = FALSE;
+				$this->shownotes[0]->errorMessage[] = 'Your first entry is not a chapter, but chapters are being used.';
+			}
 			// Check for URLs.
 			preg_match_all('/\s+<(.*)>/i', $line, $url );
 			if ( isset( $url[1][0] ) && isset( $url[0][0] ) ) {
+				// @validation: Shownotes containes multiple URLs.
 				if ( count($url[1]) > 1 || strrpos($url[1][0], " ") ) {
 					$shownote->isValid = FALSE;
-					$shownote->errorMessage[] = 'Shownote contains multiple URLs.';
+					$shownote->errorMessage[] = 'Shownote contains multiple URLs or an unescaped "<".';
 				}
 				$line = $this->remove_from_line( $line, $url[0][0] );
+				// @validation: Missing < must be escaped or closed.
 				if ( strrpos($url[1][0], "<") ) {
 					$shownote->isValid = FALSE;
-					$shownote->errorMessage[] = 'Shownote contains "<" that needs to be escaped.';
+					$shownote->errorMessage[] = 'Shownote contains "<" that needs to be escaped or a closed.';
 				}
 				$shownote->url = urlencode($url[1][0]); // There are no invalid URLs
 			}
@@ -874,6 +887,12 @@ class Shownotes {
 
 			$linenumber++;
 		}
+	}
+
+	public function validate() {
+
+		
+		
 	}
 
 	private function isValidTimeStamp($timestamp) {
