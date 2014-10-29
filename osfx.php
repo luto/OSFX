@@ -136,12 +136,101 @@ function osfx_settings_page() {
 	        		Template
 	        	</th>
 	       		<td>
-	       			<textarea cols="80" rows="10" id="osfx_template" name="osfx_template"><?php echo get_option('osfx_template'); ?></textarea>
-	       			<br />
-	       			<label for="osfx_template">Use the Twig Template Syntax to edit the way how your Shownotes are displayed</label>
+	       			<table class="podlove_alternating" border="0" cellspacing="0">
+	       				<thead>
+	       					<tr>
+	       						<th>Template ID</th>
+	       						<th>Actions</th>
+	       					</tr>
+	       				</thead>
+	       				<tbody id="templates_table_body"></tbody>
+	       			</table>
+	       			<input type="button" class="button" id="add_template" value="+" />
 	       		</td>
 	        </tr>
 		</table>
+		<script type="text/template" id="template_line_template">
+		<tr> 
+			<td class="osfx_template_options_row">
+				<span class="osfx_template_triangle" id="osfx_template_triangle_{{counter}}">►</span>
+				<h4 class="osfx_template_id">{{name}}</h4>
+				<div class="osfx_template_source_wrapper">
+					<input type="text" name="osfx_template[{{counter}}][id]" value="{{name}}" placeholder="Template ID" class="osfx_template_id" />
+					<label for="">Description to identify the template in the shortcode: <code>[shownotes template="$foo"]</code></label>
+					<textarea cols="80" rows="10" id="osfx_template_{{counter}}_source" name="osfx_template[{{counter}}][source]">{{source}}</textarea>
+					<label for="">Templates support HTML and Twig. Read the Template Guide to get started.</label>
+				</div>
+			</td>
+			<td class="osfx_template_action_row">
+				<span class="clone_template"></span>
+				<span class="delete_template"></span>
+			</td>
+		</tr>
+		</script>
+		<script type="text/javascript">
+			var template_counter = 0;
+			var templates = <?php echo json_encode(get_option('osfx_template')); ?>;
+
+			(function($) {
+			  $( document ).ready( function() {
+			  	$.each( templates, function ( id ) {
+			  		add_affiliation(id);
+			  		$(".delete_affiliate_program").on( 'click', function() {
+			  			$(this).closest("tr").remove();	
+			  		} );
+			  		$("#osfx_template_triangle_" + id).on( 'click', function () {
+			  		  if ( $(this).text() == '►' ) {
+			  		    $(this).text('▼');
+			  		  } else {
+			  		    $(this).text('►');
+			  		  }
+			  		  $(this).parent().find('.osfx_template_source_wrapper').toggle();
+			  		} );
+			  	});
+
+			  	function add_affiliation( id ) {
+			  		var source = $("#template_line_template").html();
+			  		source = source.replace( /\{\{source\}\}/g, templates[id].source );
+			  		source = source.replace( /\{\{name\}\}/g, templates[id].id );
+			  		source = source.replace( /\{\{counter\}\}/g, id );
+			  		counter++;
+
+			  		$("#templates_table_body").append( source );
+			  		row = $("#templates_table_body tr:last");
+
+			  		$(".delete_template").on( 'click', function() {
+			  			$(this).closest("tr").remove();	
+			  		} );
+			  	}
+
+			  	$("#add_template").on( 'click', function () {
+			  		var source = $("#template_line_template").html();
+			  		source = source.replace( /\{\{source\}\}/g, "" );
+			  		source = source.replace( /\{\{name\}\}/g, "" );
+			  		source = source.replace( /\{\{counter\}\}/g, counter );
+			  		counter++;
+
+			  		$("#templates_table_body").append( source );
+			  		row = $("#templates_table_body tr:last");
+
+			  		$(".osfx_template_triangle").on( 'click', function () {
+			  		  if ( $(this).text() == '►' ) {
+			  		    $(this).text('▼');
+			  		  } else {
+			  		    $(this).text('►');
+			  		  }
+			  		  $(this).parent().find('.osfx_template_source_wrapper').toggle();
+			  		} );
+
+			  		row.find(".osfx_template_triangle").click();
+
+			  		$(".delete_template").on( 'click', function() {
+			  			$(this).closest("tr").remove();	
+			  		} );
+			  	});
+			  } );
+			}(jQuery));
+		</script>
 		<h3>Affiliation</h3>
 		Configure your affiliate programs.
 		<table class="form-table">        
@@ -158,9 +247,7 @@ function osfx_settings_page() {
 		        				<th>Delete</th>
 		        			</tr>
 		        		</thead>
-		        		<tbody id="affiliate_program_table_body">
-
-		        		</tbody>
+		        		<tbody id="affiliate_program_table_body"></tbody>
 		        	</table>
 		        	<input type="button" class="button" id="add_affiliate_program" value="+" />
 		        </td>
@@ -261,15 +348,6 @@ function osfx_settings_page() {
 		        </td>
 	        </tr>
 	    </table>
-	    <script type="text/javascript">
-	    	var editor = CodeMirror.fromTextArea(document.getElementById("osfx_template"), {
-	    	  mode: "application/xml",
-	    	  styleActiveLine: true,
-	    	  lineNumbers: true,
-	    	  lineWrapping: true,
-	    	  mode: 'application/x-twig'
-	    	});
-	    </script>
 	    <?php submit_button(); ?>
 	</form>
 	</div>
@@ -859,7 +937,7 @@ class Shownotes {
 					$shownote->isValid = FALSE;
 					$shownote->errorMessage[] = 'Shownote contains "<" that needs to be escaped or a closed.';
 				}
-				$shownote->url = urlencode($url[1][0]); // There are no invalid URLs
+				$shownote->url = $url[1][0];
 			}
 			// Fetch the timestamps.
 			preg_match('/^([0-9|:|.]+)/i', $line, $timestamp);

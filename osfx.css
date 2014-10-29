@@ -28,6 +28,37 @@ table.podlove_alternating tr:nth-child(even) {
 	background: #EAEAEA;
 }
 
+td.osfx_template_action_row {
+	vertical-align: top;
+}
+
+td.osfx_template_options_row {
+	width: 425px;
+}
+
+div.osfx_template_source_wrapper {
+	display: none;
+	margin: 10px 0 0 20px;
+}
+
+input.osfx_template_id {
+	width: 425px;
+}
+
+span.osfx_template_triangle {
+	cursor: pointer;
+}
+
+div.osfx_template_source_wrapper label {
+	display: block;
+	margin-bottom: 1em;
+}
+
+h4.osfx_template_id {
+	display: inline-block;
+	margin: 0px 0 0px 5px;
+}
+
 div#osfx_tabs_wrapper {
 	border: 1px solid #d3d3d3;
 	border-top: none;
@@ -90,7 +121,9 @@ Instead of a list of all class selectors,
 you can use the generic selector below, but it's slower:
 [class*="podlove-icon-"] {
 */
-.delete_affiliate_program {
+.delete_affiliate_program,
+.delete_template,
+.clone_template {
 	font-family: 'Podlove';
 	speak: none;
 	font-style: normal;
@@ -101,14 +134,22 @@ you can use the generic selector below, but it's slower:
 	-webkit-font-smoothing: antialiased;
 }
 
-.delete_affiliate_program:before {
+.clone_template:before {
+	content: "+";
+	font-size: 1.5em;
+	cursor: pointer;
+}
+
+.delete_affiliate_program:before,
+.delete_template:before {
 	content: "\f00d";
 	color: red;
 	font-size: 1.5em;
 	cursor: pointer;
 }
 
-#add_affiliate_program {
+#add_affiliate_program,
+#add_template {
 	font-weight: bold;
 	margin-top: -1em;
 }
