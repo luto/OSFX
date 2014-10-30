@@ -406,75 +406,6 @@ function save_shownotes( $post_id ) {
 }
 
 function admin_scripts_and_styles() {
-	wp_register_script(
-		'osfx_codemirror',
-		plugins_url() . '/OSFX/lib/codemirror/lib/codemirror.js',
-		false
-	);
-	wp_enqueue_script('osfx_codemirror');
-
-	wp_register_script(
-		'osfx_codemirror_twig',
-		plugins_url() . '/OSFX/lib/codemirror/mode/twig.js',
-		false
-	);
-	wp_enqueue_script('osfx_codemirror_twig');
-
-	wp_register_script(
-		'osfx_codemirror_twigmixed',
-		plugins_url() . '/OSFX/lib/codemirror/mode/twigmixed.js',
-		false
-	);
-	wp_enqueue_script('osfx_codemirror_twigmixed');
-
-	wp_register_script(
-		'osfx_codemirror_mixedmode',
-		plugins_url() . '/OSFX/lib/codemirror/mode/htmlmixed.js',
-		false
-	);
-	wp_enqueue_script('osfx_codemirror_mixedmode');
-
-	wp_register_script(
-		'osfx_codemirror_css',
-		plugins_url() . '/OSFX/lib/codemirror/mode/css.js',
-		false
-	);
-	wp_enqueue_script('osfx_codemirror_css');
-
-	wp_register_script(
-		'osfx_codemirror_osf',
-		plugins_url() . '/OSFX/lib/codemirror/mode/osf/osf.js',
-		false
-	);
-	wp_enqueue_script('osfx_codemirror_osf');
-
-	wp_register_script(
-		'osfx_codemirror_javascript',
-		plugins_url() . '/OSFX/lib/codemirror/mode/javascript.js',
-		false
-	);
-	wp_enqueue_script('osfx_codemirror_javascript');
-
-	wp_register_script(
-		'osfx_codemirror_xml',
-		plugins_url() . '/OSFX/lib/codemirror/mode/xml.js',
-		false
-	);
-	wp_enqueue_script('osfx_codemirror_xml');
-
-	wp_register_script(
-		'osfx_codemirror_vbscript',
-		plugins_url() . '/OSFX/lib/codemirror/mode/vbscript.js',
-		false
-	);
-	wp_enqueue_script('osfx_codemirror_vbscript');
-
-	wp_register_style(
-		'osfx_codemirror',
-		plugins_url() . '/OSFX/lib/codemirror/lib/codemirror.css',
-		false
-	);
-	wp_enqueue_style('osfx_codemirror');
 	wp_register_style(
 		'osfx_settings_styles',
 		plugins_url() . '/OSFX/osfx.css',
@@ -582,13 +513,7 @@ function shownote_box() {
 				</div>
 
 				<script type="text/javascript">
-					var editor = CodeMirror.fromTextArea(document.getElementById("_osfx_shownotes"), {
-					  mode: "application/xml",
-					  styleActiveLine: true,
-					  lineNumbers: true,
-					  lineWrapping: true,
-					  mode: 'text/x-osf'
-					});
+					
 				</script>								
 			<?php
 		},
