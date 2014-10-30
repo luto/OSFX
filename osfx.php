@@ -888,7 +888,7 @@ class Shownotes {
 		}
 
 		/*
-		 * Header is removed. Now we can start parsing every single line
+		 * Header is removed. Now we can start parsing every single line.
 		 */
 		foreach ( explode("\n", $this->source) as $line) {
 			// Remove white-spaces.
