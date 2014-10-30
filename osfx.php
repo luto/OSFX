@@ -157,12 +157,12 @@ function osfx_settings_page() {
 				<div class="osfx_template_source_wrapper">
 					<input type="text" name="osfx_template[{{counter}}][id]" value="{{name}}" placeholder="Template ID" class="osfx_template_id" />
 					<label for="">Description to identify the template in the shortcode: <code>[shownotes template="$foo"]</code></label>
+					<div id="ace-shownotes-{{counter}}" class="ace-shownotes"></div>
 					<textarea cols="80" rows="10" id="osfx_template_{{counter}}_source" name="osfx_template[{{counter}}][source]">{{source}}</textarea>
 					<label for="">Templates support HTML and Twig. Read the Template Guide to get started.</label>
 				</div>
 			</td>
 			<td class="osfx_template_action_row">
-				<span class="clone_template"></span>
 				<span class="delete_template"></span>
 			</td>
 		</tr>
@@ -173,6 +173,9 @@ function osfx_settings_page() {
 
 			(function($) {
 			  $( document ).ready( function() {
+			  	var editor = new Object();
+			  	var textarea = new Object();
+
 			  	$.each( templates, function ( id ) {
 			  		add_template(id);
 			  		$(".delete_affiliate_program").on( 'click', function() {
@@ -193,7 +196,6 @@ function osfx_settings_page() {
 			  		source = source.replace( /\{\{source\}\}/g, templates[id].source );
 			  		source = source.replace( /\{\{name\}\}/g, templates[id].id );
 			  		source = source.replace( /\{\{counter\}\}/g, id );
-			  		counter++;
 
 			  		$("#templates_table_body").append( source );
 			  		row = $("#templates_table_body tr:last");
@@ -201,18 +203,31 @@ function osfx_settings_page() {
 			  		$(".delete_template").on( 'click', function() {
 			  			$(this).closest("tr").remove();	
 			  		} );
+
+			  		editor[template_counter] = ace.edit("ace-shownotes-" + template_counter);
+			  		textarea[template_counter] = jQuery("#osfx_template_" + template_counter + "_source");
+			  		textarea[template_counter].hide();
+			  		editor[template_counter].getSession().setUseWrapMode(true);
+			  		editor[template_counter].setTheme("ace/theme/textmate");
+			  		editor[template_counter].getSession().setValue(textarea[template_counter].val());
+			  		editor[template_counter].getSession().setMode("ace/mode/osf");
+			  		editor[template_counter].getSession().on('change', function() {
+			  			textarea[template_counter].val(editor[template_counter].getSession().getValue()); // Must keep its counter in mind!
+			  		});
+
+			  		$("#ace-shownotes-" + template_counter).css( 'position', 'relative' );
+			  		template_counter++;
 			  	}
 
 			  	$("#add_template").on( 'click', function () {
 			  		var source = $("#template_line_template").html();
 			  		source = source.replace( /\{\{source\}\}/g, "" );
 			  		source = source.replace( /\{\{name\}\}/g, "" );
-			  		source = source.replace( /\{\{counter\}\}/g, counter );
-			  		counter++;
+			  		source = source.replace( /\{\{counter\}\}/g, template_counter );
 			  		$("#templates_table_body").append( source );
 			  		row = $("#templates_table_body tr:last");
 
-			  		$("#osfx_template_triangle_" + counter).on( 'click', function () {
+			  		$("#osfx_template_triangle_" + template_counter).on( 'click', function () {
 			  		  if ( $(this).text() == '►' ) {
 			  		    $(this).text('▼');
 			  		  } else {
@@ -221,10 +236,24 @@ function osfx_settings_page() {
 			  		  $(this).parent().find('.osfx_template_source_wrapper').toggle();
 			  		} );
 
-			  		row.find("#osfx_template_triangle_" + counter).click();
+			  		row.find("#osfx_template_triangle_" + template_counter).click();
 			  		$(".delete_template").on( 'click', function() {
 			  			$(this).closest("tr").remove();	
 			  		} );
+
+			  		editor[template_counter] = ace.edit("ace-shownotes-" + template_counter);
+			  		textarea[template_counter] = jQuery("#osfx_template_" + template_counter + "_source");
+			  		textarea[template_counter].hide();
+			  		editor[template_counter].getSession().setUseWrapMode(true);
+			  		editor[template_counter].setTheme("ace/theme/textmate");
+			  		editor[template_counter].getSession().setValue(textarea[template_counter].val());
+			  		editor[template_counter].getSession().setMode("ace/mode/osf");
+			  		editor[template_counter].getSession().on('change', function() {
+			  			textarea[template_counter].val(editor.getSession().getValue());
+			  		});
+
+			  		$("#ace-shownotes-" + template_counter).css( 'position', 'relative' );
+			  		template_counter++;
 			  	});
 			  } );
 			}(jQuery));
