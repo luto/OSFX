@@ -406,6 +406,13 @@ function save_shownotes( $post_id ) {
 }
 
 function admin_scripts_and_styles() {
+	wp_register_script(
+		'ace',
+		plugins_url() . '/OSFX/lib/ace/ace.js',
+		false
+	);
+	wp_enqueue_script('ace');
+
 	wp_register_style(
 		'osfx_settings_styles',
 		plugins_url() . '/OSFX/osfx.css',
@@ -458,10 +465,11 @@ function shownote_box() {
 					</h2>
 					<div id="osfx_tabs_wrapper">
 						<div id="osfx_source" class="osfx-tab-container osfx-visible">
+							<div id="ace-shownotes"></div>
 							<textarea class="large-text" name="_osfx_shownotes" id="_osfx_shownotes" style="height: 200px;"><?php echo get_post_meta( $post->ID, '_shownotes' , TRUE); ?></textarea>
 
 							<?php if ( $showpadid = get_option('osfx_showpad') ) : ?>
-							<p>
+							<p id="osfx_import_container">
 								<select id="importId"></select>
 								<input type="button" class="button" 
 									onclick="importShownotes(document.getElementById('_osfx_shownotes'), document.getElementById('importId').value, 'http://cdn.simon.waldherr.eu/projects/showpad-api/getPad/?id=$$$')" 
@@ -513,7 +521,16 @@ function shownote_box() {
 				</div>
 
 				<script type="text/javascript">
-					
+					var editor = ace.edit("ace-shownotes");
+					var textarea = jQuery("#_osfx_shownotes");
+					textarea.hide();
+					editor.getSession().setUseWrapMode(true);
+					editor.setTheme("ace/theme/textmate");
+					editor.getSession().setValue(textarea.val());
+					editor.getSession().setMode("ace/mode/osf");
+					editor.getSession().on('change', function() {
+						textarea.val(editor.getSession().getValue());
+					});
 				</script>								
 			<?php
 		},
