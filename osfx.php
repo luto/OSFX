@@ -174,7 +174,7 @@ function osfx_settings_page() {
 			(function($) {
 			  $( document ).ready( function() {
 			  	$.each( templates, function ( id ) {
-			  		add_affiliation(id);
+			  		add_template(id);
 			  		$(".delete_affiliate_program").on( 'click', function() {
 			  			$(this).closest("tr").remove();	
 			  		} );
@@ -188,7 +188,7 @@ function osfx_settings_page() {
 			  		} );
 			  	});
 
-			  	function add_affiliation( id ) {
+			  	function add_template( id ) {
 			  		var source = $("#template_line_template").html();
 			  		source = source.replace( /\{\{source\}\}/g, templates[id].source );
 			  		source = source.replace( /\{\{name\}\}/g, templates[id].id );
@@ -209,11 +209,10 @@ function osfx_settings_page() {
 			  		source = source.replace( /\{\{name\}\}/g, "" );
 			  		source = source.replace( /\{\{counter\}\}/g, counter );
 			  		counter++;
-
 			  		$("#templates_table_body").append( source );
 			  		row = $("#templates_table_body tr:last");
 
-			  		$(".osfx_template_triangle").on( 'click', function () {
+			  		$("#osfx_template_triangle_" + counter).on( 'click', function () {
 			  		  if ( $(this).text() == '►' ) {
 			  		    $(this).text('▼');
 			  		  } else {
@@ -222,8 +221,7 @@ function osfx_settings_page() {
 			  		  $(this).parent().find('.osfx_template_source_wrapper').toggle();
 			  		} );
 
-			  		row.find(".osfx_template_triangle").click();
-
+			  		row.find("#osfx_template_triangle_" + counter).click();
 			  		$(".delete_template").on( 'click', function() {
 			  			$(this).closest("tr").remove();	
 			  		} );
@@ -537,22 +535,20 @@ function shownote_box() {
 		'podcast' );
 }
 
-function template( $args, $template=NULL ) {
+function template( $args ) {
 	global $post;
-
 	$source = get_post_meta( $post->ID, '_shownotes' , TRUE);
-	if ( !$source )
+
+	if ( ! $args['id'] || ! $source )
 		return;
 
-	if ( $template ) {
-		// Replace the WordPress "smart" quotes
-		$template = html_entity_decode($template);
-		$template = str_replace("“", "\"", $template);
-		$template = str_replace("”", "\"", $template);
-		$template = str_replace("‘", "\"", $template);
-		$template = str_replace("’", "\"", $template);
-	} else {
-		$template = get_option('osfx_template');
+	$twig_template = "";
+
+	foreach ( get_option('osfx_template') as $template ) {
+		if ( $template['id'] == $args['id'] ) {
+			$twig_template = $template['source'];
+			break;
+		}
 	}
 
 	$shownotes = new Shownotes();
@@ -609,7 +605,7 @@ function template( $args, $template=NULL ) {
 	$twig->addFilter($affiliate);
 
 	return $twig->render(
-		$template,
+		$twig_template,
 			array(
 					'shownotes' => $shownotes->shownotes,
 					'header' => $shownotes->header
