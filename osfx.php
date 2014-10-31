@@ -139,7 +139,7 @@ function osfx_settings_page() {
 	       			<table class="podlove_alternating" border="0" cellspacing="0">
 	       				<thead>
 	       					<tr>
-	       						<th>Template ID</th>
+	       						<th>Template</th>
 	       						<th>Actions</th>
 	       					</tr>
 	       				</thead>
@@ -156,7 +156,7 @@ function osfx_settings_page() {
 				<h4 class="osfx_template_id">{{name}}</h4>
 				<div class="osfx_template_source_wrapper">
 					<input type="text" name="osfx_template[{{counter}}][id]" value="{{name}}" placeholder="Template ID" class="osfx_template_id" />
-					<label for="">Description to identify the template in the shortcode: <code>[shownotes template="$foo"]</code></label>
+					<label for="">Description to identify the template in the shortcode</label>
 					<div id="ace-shownotes-{{counter}}" class="ace-shownotes"></div>
 					<textarea cols="80" rows="10" id="osfx_template_{{counter}}_source" name="osfx_template[{{counter}}][source]">{{source}}</textarea>
 					<label for="">Templates support HTML and Twig. Read the Template Guide to get started.</label>
@@ -195,7 +195,7 @@ function osfx_settings_page() {
 			  		var source = $("#template_line_template").html();
 			  		source = source.replace( /\{\{source\}\}/g, templates[id].source );
 			  		source = source.replace( /\{\{name\}\}/g, templates[id].id );
-			  		source = source.replace( /\{\{counter\}\}/g, id );
+			  		source = source.replace( /\{\{counter\}\}/g, template_counter );
 
 			  		$("#templates_table_body").append( source );
 			  		row = $("#templates_table_body tr:last");
@@ -205,15 +205,19 @@ function osfx_settings_page() {
 			  		} );
 
 			  		editor[template_counter] = ace.edit("ace-shownotes-" + template_counter);
+			  		$("#ace-shownotes-" + template_counter).data("test", template_counter);
 			  		textarea[template_counter] = jQuery("#osfx_template_" + template_counter + "_source");
 			  		textarea[template_counter].hide();
 			  		editor[template_counter].getSession().setUseWrapMode(true);
 			  		editor[template_counter].setTheme("ace/theme/textmate");
 			  		editor[template_counter].getSession().setValue(textarea[template_counter].val());
-			  		editor[template_counter].getSession().setMode("ace/mode/osf");
-			  		editor[template_counter].getSession().on('change', function() {
-			  			textarea[template_counter].val(editor[template_counter].getSession().getValue()); // Must keep its counter in mind!
+			  		editor[template_counter].getSession().setMode("ace/mode/twig");
+			  		$("#ace-shownotes-" + template_counter).on('keyup', function() {
+			  			textarea[$(this).data("test")].val(editor[$(this).data("test")].getSession().getValue()); // Must keep its counter in mind!
 			  		});
+			  		$(".osfx_template_id").on( 'keyup', function() {
+			  		  $(this).parent().parent().find("h4.osfx_template_id").text($(this).val());
+			  		} );
 
 			  		$("#ace-shownotes-" + template_counter).css( 'position', 'relative' );
 			  		template_counter++;
@@ -242,15 +246,19 @@ function osfx_settings_page() {
 			  		} );
 
 			  		editor[template_counter] = ace.edit("ace-shownotes-" + template_counter);
+			  		$("#ace-shownotes-" + template_counter).data("test", template_counter);
 			  		textarea[template_counter] = jQuery("#osfx_template_" + template_counter + "_source");
 			  		textarea[template_counter].hide();
 			  		editor[template_counter].getSession().setUseWrapMode(true);
 			  		editor[template_counter].setTheme("ace/theme/textmate");
 			  		editor[template_counter].getSession().setValue(textarea[template_counter].val());
-			  		editor[template_counter].getSession().setMode("ace/mode/osf");
-			  		editor[template_counter].getSession().on('change', function() {
-			  			textarea[template_counter].val(editor.getSession().getValue());
+			  		editor[template_counter].getSession().setMode("ace/mode/twig");
+			  		$("#ace-shownotes-" + template_counter).on('keyup', function() {
+			  			textarea[$(this).data("test")].val(editor[$(this).data("test")].getSession().getValue()); // Must keep its counter in mind!
 			  		});
+			  		$(".osfx_template_id").on( 'keyup', function() {
+			  		  $(this).parent().parent().find("h4.osfx_template_id").text($(this).val());
+			  		} );
 
 			  		$("#ace-shownotes-" + template_counter).css( 'position', 'relative' );
 			  		template_counter++;
@@ -564,11 +572,11 @@ function shownote_box() {
 		'podcast' );
 }
 
-function template( $args ) {
+function template( $args=array() ) {
 	global $post;
 	$source = get_post_meta( $post->ID, '_shownotes' , TRUE);
 
-	if ( ! $args['id'] || ! $source )
+	if ( empty($args['id']) || ! $source )
 		return;
 
 	$twig_template = "";
