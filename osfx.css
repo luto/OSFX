@@ -94,11 +94,10 @@ div.osfx-visible {
 div#ace-shownotes {
     position: absolute;
     margin: 0;
-    width: 791px;
     height: 261px;
-    top: 34px;
+    top: 0;
     bottom: 0;
-    left: 15px;
+    left: 0;
     right: 0;
 }
 
@@ -113,7 +112,6 @@ div.ace-shownotes {
 }
 
 p#osfx_import_container {
-	padding-top: 270px !important;
 }
 
 @font-face {

@@ -563,6 +563,7 @@ function shownote_box() {
 					editor.setTheme("ace/theme/textmate");
 					editor.getSession().setValue(textarea.val());
 					editor.getSession().setMode("ace/mode/osf");
+					jQuery("#ace-shownotes").css( 'position', 'relative' );
 					editor.getSession().on('change', function() {
 						textarea.val(editor.getSession().getValue());
 					});
