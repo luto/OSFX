@@ -3,7 +3,7 @@
 	namespace OSFX;
 
 	class Constants {
-		const affiliate_programs = array( // The array key is refered as the ID!
+		public static $affiliate_programs = array( // The array key is refered as the ID!
 				1 => 	array(
 							'title' => 'Amazon (Brazil)',
 							'url_fragment' 	=> 'amazon.com.br',

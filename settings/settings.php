@@ -229,7 +229,7 @@ class Settings {
 		    ?>
 		    <script type="text/javascript">
 		    	var counter = 0;
-		    	var affiliate_programs = <?php echo json_encode(\OSFX\Constants::affiliate_programs); ?>;
+		    	var affiliate_programs = <?php echo json_encode(\OSFX\Constants::$affiliate_programs); ?>;
 		    	var existing_affiliation = <?php echo json_encode($for_js_existing_affiliation); ?>;
 
 		    	(function($) {

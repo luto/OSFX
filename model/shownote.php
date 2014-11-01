@@ -28,23 +28,26 @@ class Shownote {
 			return;
 
 		foreach ( $existing_affiliations as $existing_affiliation ) {
-			if ( strpos( $this->url, \OSFX\Constants::affiliate_programs[$existing_affiliation['affiliate_program']]['url_fragment'] ) === FALSE )
+			$affiliations_programs = \OSFX\Constants::$affiliate_programs;
+			$affiliate_program =$affiliations_programs[$existing_affiliation['affiliate_program']];
+
+			if ( strpos( $this->url, $affiliate_program['url_fragment'] ) === FALSE )
 				continue;
 
 			$this->tags[] = 'affiliation';
 
-			if ( strpos( $this->url, \OSFX\Constants::affiliate_programs[$existing_affiliation['affiliate_program']]['existing_affiliation_identifier'] ) === FALSE ) {
-				$this->url = preg_replace(\OSFX\Constants::affiliate_programs[$existing_affiliation['affiliate_program']]['search_fragment'], 
+			if ( strpos( $this->url, $affiliate_program['existing_affiliation_identifier'] ) === FALSE ) {
+				$this->url = preg_replace($affiliate_program['search_fragment'], 
 					str_replace( 
 							"{{affiliate-id}}", 
 							$existing_affiliation['affiliate_id'], 
-							\OSFX\Constants::affiliate_programs[$existing_affiliation['affiliate_program']]['replace_fragment']
+							$affiliate_program['replace_fragment']
 						), 
 					$this->url);	
 			} else {
 				$this->url = preg_replace( 
-							sprintf( "/%s([^$&]+)($|&)/", str_replace( "/", "\/", str_replace("{{affiliate-id}}", "", \OSFX\Constants::affiliate_programs[$existing_affiliation['affiliate_program']]['existing_affiliation_regexp']) ) ),
-							sprintf( "%s$2$3", str_replace("{{affiliate-id}}", $existing_affiliation['affiliate_id'], \OSFX\Constants::affiliate_programs[$existing_affiliation['affiliate_program']]['existing_affiliation_regexp']) ),
+							sprintf( "/%s([^$&]+)($|&)/", str_replace( "/", "\/", str_replace("{{affiliate-id}}", "", $affiliate_program['existing_affiliation_regexp']) ) ),
+							sprintf( "%s$2$3", str_replace("{{affiliate-id}}", $existing_affiliation['affiliate_id'], $affiliate_program['existing_affiliation_regexp']) ),
 							$this->url
 						);
 			}
