@@ -575,7 +575,16 @@ function shownote_box() {
 
 function template( $args=array() ) {
 	global $post;
-	$source = get_post_meta( $post->ID, '_shownotes' , TRUE);
+	if ( isset($args['scope']) && $args['scope'] == 'global' ) {
+		global $wpdb;
+		$source = '';
+		$shownotes_array = $wpdb->get_col( "SELECT DISTINCT postmeta.meta_value FROM {$wpdb->postmeta} postmeta LEFT JOIN {$wpdb->posts} post ON post.ID = postmeta.post_id WHERE postmeta.meta_key = '_shownotes' AND post.post_status = 'publish'	AND post.post_type = 'podcast'" );
+		foreach ($shownotes_array as $shownote) {
+			$source .= preg_replace("/HEADER(.*)\/HEADER/si", '', $shownote);
+		}
+	} else {
+		$source = get_post_meta( $post->ID, '_shownotes' , TRUE);
+	}
 
 	if ( empty($args['id']) || ! $source )
 		return;
