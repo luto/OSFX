@@ -38,10 +38,10 @@ add_filter( 'posts_groupby', 'shownotes_groupby' );
 function shownotes_search_where($query) {
 
   // if we are on a search page, modify the generated SQL
-  if ( is_search() && !is_admin() ) {
+  if ( get_option('osfx_search') == 'on' && is_search() && !is_admin() ) {
 
       global $wpdb;
-      $custom_fields = array('osfx_shownotes');
+      $custom_fields = array('_shownotes');
       $keywords = explode(' ', get_query_var('s')); // build an array from the search string
       $shownotes_query = "";
       foreach ($custom_fields as $field) {
@@ -592,6 +592,7 @@ function template( $args=array() ) {
 	$shownotes = new Shownotes();
 	$shownotes->source = $source;
 	$shownotes->parse();
+	$shownotes->validate();
 
 	$loader = new Twig_Loader_String();
 	$twig = new Twig_Environment($loader);
@@ -632,7 +633,7 @@ function template( $args=array() ) {
 	$filtertype = new Twig_SimpleFilter( "type", function ( $notes, $type ) use ( $shownotes ) {
 		$filtered_shownotes = clone $shownotes;
 		$filtered_shownotes->filter_by_property( "type", $type );
-		
+
 	    return $filtered_shownotes->shownotes;
 	});
 	$twig->addFilter($filtertype);
@@ -946,9 +947,13 @@ class Shownotes {
 	}
 
 	public function validate() {
-
-		
-		
+		foreach ($this->shownotes as $shownote) {
+			// Check for invalid URLs
+			if ( $shownote->url && ! filter_var($shownote->url, FILTER_VALIDATE_URL) ) {
+				$shownote->isValid = FALSE;
+				$shownote->errorMessage[] = 'Shownote contains an invalid URL.';
+			}
+		}
 	}
 
 	private function isValidTimeStamp($timestamp) {
