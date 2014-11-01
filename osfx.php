@@ -630,8 +630,10 @@ function template( $args=array() ) {
 
 	// Display a specific type only
 	$filtertype = new Twig_SimpleFilter( "type", function ( $notes, $type ) use ( $shownotes ) {
-	    $shownotes->filter_by_property( "type", $type );
-	    return $shownotes->shownotes;
+		$filtered_shownotes = clone $shownotes;
+		$filtered_shownotes->filter_by_property( "type", $type );
+		
+	    return $filtered_shownotes->shownotes;
 	});
 	$twig->addFilter($filtertype);
 
