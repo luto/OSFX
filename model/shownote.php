@@ -22,26 +22,32 @@ class Shownote {
 		if ( ! $this->url )
 			return;
 
-		require('lib/affiliate_programs.php');
-
 		$existing_affiliations = get_option('osfx_affiliations');
 
 		if ( empty($existing_affiliations) )
 			return;
 
 		foreach ( $existing_affiliations as $existing_affiliation ) {
-			if ( strpos( $this->url, $affiliate_programs[$existing_affiliation['affiliate_program']]['url_fragment'] ) === FALSE )
+			if ( strpos( $this->url, \OSFX\Constants::affiliate_programs[$existing_affiliation['affiliate_program']]['url_fragment'] ) === FALSE )
 				continue;
 
 			$this->tags[] = 'affiliation';
 
-			$this->url = preg_replace($affiliate_programs[$existing_affiliation['affiliate_program']]['search_fragment'], 
-				str_replace( 
-						"{{affiliate-id}}", 
-						$existing_affiliation['affiliate_id'], 
-						$affiliate_programs[$existing_affiliation['affiliate_program']]['replace_fragment']
-					), 
-				$this->url);
+			if ( strpos( $this->url, \OSFX\Constants::affiliate_programs[$existing_affiliation['affiliate_program']]['existing_affiliation_identifier'] ) === FALSE ) {
+				$this->url = preg_replace(\OSFX\Constants::affiliate_programs[$existing_affiliation['affiliate_program']]['search_fragment'], 
+					str_replace( 
+							"{{affiliate-id}}", 
+							$existing_affiliation['affiliate_id'], 
+							\OSFX\Constants::affiliate_programs[$existing_affiliation['affiliate_program']]['replace_fragment']
+						), 
+					$this->url);	
+			} else {
+				$this->url = preg_replace( 
+							sprintf( "/%s([^$&]+)($|&)/", str_replace( "/", "\/", str_replace("{{affiliate-id}}", "", \OSFX\Constants::affiliate_programs[$existing_affiliation['affiliate_program']]['existing_affiliation_regexp']) ) ),
+							sprintf( "%s$2$3", str_replace("{{affiliate-id}}", $existing_affiliation['affiliate_id'], \OSFX\Constants::affiliate_programs[$existing_affiliation['affiliate_program']]['existing_affiliation_regexp']) ),
+							$this->url
+						);
+			}
 		}
 	}
 

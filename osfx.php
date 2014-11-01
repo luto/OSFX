@@ -21,6 +21,8 @@ require('model/shownotes.php');
 require('model/shownote.php');
 // Ajax
 require('lib/ajax.php');
+// Constants
+require('lib/constants.php');
 
 add_action( 'add_meta_boxes', array( 'OSFX\Settings\Post', 'shownote_box' ) );
 add_action( 'save_post', array( 'OSFX\Settings\Post', 'save_shownotes') );
