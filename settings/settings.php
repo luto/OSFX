@@ -9,7 +9,7 @@ class Settings {
 				'OSF X',
 				'manage_options',
 				'osfx',
-				array( 'OSFX\Settings', 'osfx_settings_page')
+				array( 'OSFX\Settings\Settings', 'osfx_settings_page')
 			);
 	}
 
@@ -51,7 +51,7 @@ class Settings {
 		       				<thead>
 		       					<tr>
 		       						<th>Template</th>
-		       						<th>Actions</th>
+		       						<th>Delete</th>
 		       					</tr>
 		       				</thead>
 		       				<tbody id="templates_table_body"></tbody>
@@ -66,10 +66,11 @@ class Settings {
 					<span class="osfx_template_triangle" id="osfx_template_triangle_{{counter}}">►</span>
 					<h4 class="osfx_template_id">{{name}}</h4>
 					<div class="osfx_template_source_wrapper">
-						<input type="text" name="osfx_template[{{counter}}][id]" value="{{name}}" placeholder="Template ID" class="osfx_template_id" />
+						<input type="hidden" name="osfx_template[{{counter}}][editable]" id="osfx_template_{{counter}}_editable" value="{{editable}}" />
+						<input type="text" name="osfx_template[{{counter}}][id]" value="{{name}}" placeholder="Template ID" class="osfx_template_id" {{editable}} />
 						<label for="">Description to identify the template in the shortcode</label>
 						<div id="ace-shownotes-{{counter}}" class="ace-shownotes"></div>
-						<textarea cols="80" rows="10" id="osfx_template_{{counter}}_source" name="osfx_template[{{counter}}][source]">{{source}}</textarea>
+						<textarea cols="80" rows="10" id="osfx_template_{{counter}}_source" name="osfx_template[{{counter}}][source]" class="osfx_template_source">{{source}}</textarea>
 						<label for="">Templates support HTML and Twig. Read the Template Guide to get started.</label>
 					</div>
 				</td>
@@ -107,6 +108,7 @@ class Settings {
 				  		source = source.replace( /\{\{source\}\}/g, templates[id].source );
 				  		source = source.replace( /\{\{name\}\}/g, templates[id].id );
 				  		source = source.replace( /\{\{counter\}\}/g, template_counter );
+				  		source = source.replace( /\{\{editable\}\}/g, templates[id].editable );
 
 				  		$("#templates_table_body").append( source );
 				  		row = $("#templates_table_body tr:last");
@@ -119,6 +121,8 @@ class Settings {
 				  		$("#ace-shownotes-" + template_counter).data("test", template_counter);
 				  		textarea[template_counter] = jQuery("#osfx_template_" + template_counter + "_source");
 				  		textarea[template_counter].hide();
+				  		if ( jQuery("#osfx_template_" + template_counter + "_editable").val() == 'readonly' )
+				  			editor[template_counter].setReadOnly(true);
 				  		editor[template_counter].getSession().setUseWrapMode(true);
 				  		editor[template_counter].setTheme("ace/theme/textmate");
 				  		editor[template_counter].getSession().setValue(textarea[template_counter].val());
@@ -139,6 +143,7 @@ class Settings {
 				  		source = source.replace( /\{\{source\}\}/g, "" );
 				  		source = source.replace( /\{\{name\}\}/g, "" );
 				  		source = source.replace( /\{\{counter\}\}/g, template_counter );
+				  		source = source.replace( /\{\{editable\}\}/g, "" );
 				  		$("#templates_table_body").append( source );
 				  		row = $("#templates_table_body tr:last");
 

@@ -76,7 +76,7 @@ class OSFX {
 
 	  }
 
-	  return ($query);
+	  return $query;
 	}
 
 	/* 
