@@ -105,7 +105,7 @@ class Shownotes {
 			$this->header['podcaster'] = $this->parse_contributor_list($this->header['podcaster']);
 	}
 
-	public function parse() {
+	public function parse($escape = TRUE) {
 		// This will be the array filled with shownotes
 		$shownotes = array();
 		// Dictonary containing all reserved categories
@@ -201,7 +201,9 @@ class Shownotes {
 			// The rest will be the title of the line.
 			$shownote->title = trim($line);
 			$shownote->unescape_title_chars();
-			$shownote->title = htmlspecialchars($shownote->title);
+			if ( $escape ) {
+				$shownote->title = htmlspecialchars($shownote->title);
+			}
 
 			$this->shownotes[] = $shownote;
 

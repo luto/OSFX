@@ -16,7 +16,7 @@ $source = file_get_contents('php://stdin');
 
 $shownotes = new OSFX\Model\Shownotes();
 $shownotes->source = $source;
-$shownotes->parse();
+$shownotes->parse(FALSE);
 $shownotes->validate();
 
 // remove the source to save some bytes
